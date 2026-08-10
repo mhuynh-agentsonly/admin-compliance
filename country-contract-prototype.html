@@ -80,18 +80,24 @@ th.sortable:hover{color:var(--ink)}
 td{padding:11px 18px;border-bottom:1px solid var(--line);font-size:13.3px;vertical-align:middle}
 tbody tr{cursor:pointer;height:63px}   /* uniform rows whether or not a draft note is present */
 tbody tr:hover{background:var(--blue-s)}
+/* the row you just acted on announces itself, so the order can stay stable */
+tbody tr.flash{animation:flashrow 2.6s ease-out}
+@keyframes flashrow{
+  0%,45%{background:var(--blue-s);box-shadow:inset 3px 0 0 var(--blue)}
+  100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
 tr:last-child td{border-bottom:0}
 .cty{display:flex;align-items:center;gap:9px;font-weight:500}
 .cty .fl{font-size:15px;line-height:1}
 .doc{display:flex;gap:8px;align-items:flex-start}
 .mutedline{font-size:11.3px;color:var(--ink3);margin-top:3px}
-.sideline{font-size:11.3px;color:var(--blue);margin-top:3px}
+.vsub{font-size:11.3px;color:var(--blue);margin-top:3px;font-weight:500}
 .pill{display:inline-block;font-size:11px;font-weight:600;padding:2.5px 9px;border-radius:999px;white-space:nowrap}
 .p-active{background:var(--green-s);color:var(--green)}
 .p-draft{background:var(--slate-s);color:var(--ink2)}
 .p-super{background:var(--slate-s);color:var(--ink2)}
 .mono{font-variant-numeric:tabular-nums;color:var(--ink2)}
-td.act{text-align:right;width:56px}
+td.act{text-align:right;width:78px}
+th:last-child{text-align:right}
 td.act{position:relative}
 .menu{position:fixed;z-index:140;background:#fff;border:1px solid var(--line);
   border-radius:9px;box-shadow:var(--sh-lg);padding:5px;min-width:212px;text-align:left}
@@ -102,6 +108,14 @@ td.act{position:relative}
 .menu .sep{height:1px;background:var(--line);margin:5px 0}
 .kebab{border:0;background:transparent;color:var(--ink3);font-size:16px;padding:2px 7px;border-radius:5px;line-height:1}
 .kebab:hover{background:var(--line);color:var(--ink)}
+.pager{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.pinfo{font-size:12.5px;color:var(--ink3)}
+.pbtns{margin-left:auto;display:flex;gap:4px}
+.pbtn{min-width:30px;height:30px;padding:0 8px;border:1px solid var(--line2);background:#fff;
+  border-radius:7px;font-size:12.8px;color:var(--ink2)}
+.pbtn:hover:not(:disabled){background:var(--hover)}
+.pbtn.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+.pbtn:disabled{opacity:.4;cursor:not-allowed}
 .emptystate{padding:56px 24px;text-align:center}
 .emptystate .big{font-size:26px;margin-bottom:10px;opacity:.4}
 .emptystate h3{margin:0 0 5px;font-size:15px}
@@ -197,8 +211,6 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 .filecard .rm{margin-left:auto;border:0;background:transparent;color:var(--ink3);padding:5px;border-radius:6px;
   display:inline-flex;align-items:center;justify-content:center}
 .filecard .rm:hover{background:var(--red-s);color:var(--red)}
-.langchip{display:inline-flex;align-items:center;gap:7px;margin-top:9px;background:var(--slate-s);border-radius:6px;padding:4px 9px;font-size:12px;color:var(--ink2)}
-.langchip select{border:0;background:transparent;font-size:12px;font-weight:600;color:var(--ink);padding:0 2px}
 .vchip{display:inline-flex;align-items:center;gap:7px;background:var(--blue-s);color:var(--blue);border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:600}
 
 .inl{border-radius:8px;padding:10px 13px;font-size:12.6px;margin-top:11px;display:flex;gap:9px;align-items:flex-start;border:1px solid}
@@ -294,7 +306,7 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
         <button class="chip" data-f="active" onclick="setFilter('active',this)">Active</button>
         <button class="chip" data-f="draft" onclick="setFilter('draft',this)">Draft in progress</button>
         <div class="sp"></div>
-        <div class="search"><span class="mag">⌕</span><input type="text" id="q" placeholder="Search country or document…" oninput="render()"></div>
+        <div class="search"><span class="mag">⌕</span><input type="text" id="q" placeholder="Search country or document…" oninput="PAGE=1;render()"></div>
       </div>
       <div id="tableSlot"></div>
     </div>
@@ -308,35 +320,38 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 /* =================== DATA =================== */
 const TODAY='2026-08-07', ME='Mai Huynh';
 const COUNTRIES=[
-  {c:'CL',f:'🇨🇱',n:'Chile',      lang:'Spanish',    eligible:true},
-  {c:'PT',f:'🇵🇹',n:'Portugal',   lang:'Portuguese', eligible:true, strictLang:true},
-  {c:'AR',f:'🇦🇷',n:'Argentina',  lang:'Spanish',    eligible:true},
-  {c:'MY',f:'🇲🇾',n:'Malaysia',   lang:'English',    eligible:true},
-  {c:'KR',f:'🇰🇷',n:'South Korea',lang:'Korean',     eligible:true},
-  {c:'VN',f:'🇻🇳',n:'Vietnam',    lang:'Vietnamese', eligible:true, strictLang:true},
-  {c:'TH',f:'🇹🇭',n:'Thailand',   lang:'Thai',       eligible:true},
-  {c:'ID',f:'🇮🇩',n:'Indonesia',  lang:'Bahasa',     eligible:true, strictLang:true},
-  {c:'ES',f:'🇪🇸',n:'Spain',      lang:'Spanish',    eligible:true},
-  {c:'PE',f:'🇵🇪',n:'Peru',       lang:'Spanish',    eligible:true},
+  {c:'CL',f:'🇨🇱',n:'Chile', eligible:true},
+  {c:'PT',f:'🇵🇹',n:'Portugal', eligible:true},
+  {c:'AR',f:'🇦🇷',n:'Argentina', eligible:true},
+  {c:'MY',f:'🇲🇾',n:'Malaysia', eligible:true},
+  {c:'KR',f:'🇰🇷',n:'South Korea', eligible:true},
+  {c:'VN',f:'🇻🇳',n:'Vietnam', eligible:true},
+  {c:'TH',f:'🇹🇭',n:'Thailand', eligible:true},
+  {c:'ID',f:'🇮🇩',n:'Indonesia', eligible:true},
+  {c:'ES',f:'🇪🇸',n:'Spain', eligible:true},
+  {c:'PE',f:'🇵🇪',n:'Peru', eligible:true},
   // configured for onboarding, no contract uploaded yet
-  {c:'CO',f:'🇨🇴',n:'Colombia',    lang:'Spanish',    eligible:true},
-  {c:'PH',f:'🇵🇭',n:'Philippines', lang:'English',    eligible:true},
-  {c:'BR',f:'🇧🇷',n:'Brazil',      lang:'Portuguese', eligible:true},
-  {c:'MX',f:'🇲🇽',n:'Mexico',      lang:'Spanish',    eligible:true},
-  {c:'IN',f:'🇮🇳',n:'India',       lang:'English',    eligible:true},
-  {c:'PK',f:'🇵🇰',n:'Pakistan',    lang:'Urdu',       eligible:true},
-  {c:'BD',f:'🇧🇩',n:'Bangladesh',  lang:'Bengali',    eligible:true},
-  {c:'NG',f:'🇳🇬',n:'Nigeria',     lang:'English',    eligible:true},
-  {c:'KE',f:'🇰🇪',n:'Kenya',       lang:'English',    eligible:true},
-  {c:'GH',f:'🇬🇭',n:'Ghana',       lang:'English',    eligible:true},
-  {c:'EG',f:'🇪🇬',n:'Egypt',       lang:'Arabic',     eligible:true},
-  {c:'MA',f:'🇲🇦',n:'Morocco',     lang:'French',     eligible:true},
-  {c:'ZA',f:'🇿🇦',n:'South Africa',lang:'English',    eligible:true},
+  {c:'CO',f:'🇨🇴',n:'Colombia', eligible:true},
+  {c:'PH',f:'🇵🇭',n:'Philippines', eligible:true},
+  {c:'BR',f:'🇧🇷',n:'Brazil', eligible:true},
+  {c:'MX',f:'🇲🇽',n:'Mexico', eligible:true},
+  {c:'IN',f:'🇮🇳',n:'India', eligible:true},
+  {c:'PK',f:'🇵🇰',n:'Pakistan', eligible:true},
+  {c:'BD',f:'🇧🇩',n:'Bangladesh', eligible:true},
+  {c:'NG',f:'🇳🇬',n:'Nigeria', eligible:true},
+  {c:'KE',f:'🇰🇪',n:'Kenya', eligible:true},
+  {c:'GH',f:'🇬🇭',n:'Ghana', eligible:true},
+  {c:'EG',f:'🇪🇬',n:'Egypt', eligible:true},
+  {c:'MA',f:'🇲🇦',n:'Morocco', eligible:true},
+  {c:'ZA',f:'🇿🇦',n:'South Africa', eligible:true},
+  {c:'TR',f:'🇹🇷',n:'Turkey', eligible:true},
+  {c:'PL',f:'🇵🇱',n:'Poland', eligible:true},
+  {c:'UA',f:'🇺🇦',n:'Ukraine', eligible:true},
+  {c:'RO',f:'🇷🇴',n:'Romania', eligible:true},
   // onboarding not configured yet — never listed
-  {c:'TR',f:'🇹🇷',n:'Turkey',      lang:'Turkish',    eligible:false},
-  {c:'PL',f:'🇵🇱',n:'Poland',      lang:'Polish',     eligible:false},
+  {c:'JO',f:'🇯🇴',n:'Jordan', eligible:false},
+  {c:'TN',f:'🇹🇳',n:'Tunisia', eligible:false},
 ];
-const LANGS=['Arabic','Bahasa','Bengali','English','French','Korean','Portuguese','Spanish','Thai','Urdu','Vietnamese'];
 const C=c=>COUNTRIES.find(x=>x.c===c);
 
 function v(n,st,pub,signers,note,by,upd,file){
@@ -344,30 +359,66 @@ function v(n,st,pub,signers,note,by,upd,file){
     file:file===undefined?('contract_v'+n+'.pdf'):file,hash:'sha256:'+Math.abs(n*7919*31).toString(16).padStart(8,'0')+'…'};
 }
 let ROWS=[
-  {c:'KR',doc:'Data Processing Addendum',lang:'Korean',versions:[
+  {c:'KR',doc:'Data Processing Addendum', versions:[
     v(2,'active','2025-05-14',218,'Revised DPA from counsel.',ME),
     v(1,'superseded','2024-11-02',96,'Initial DPA.','J. Park')]},
-  {c:'CL',doc:'Independent Contractor Agreement',lang:'Spanish',versions:[
+  {c:'CL',doc:'Independent Contractor Agreement', versions:[
     v(3,'active','2026-07-01',812,'Updated payment terms, clause 7.',ME),
     v(2,'superseded','2026-02-11',540,'Added dispute resolution section.',ME),
     v(1,'superseded','2025-08-01',210,'Initial agreement.','L. Ortiz')]},
-  {c:'PT',doc:'Independent Contractor Agreement',lang:'Portuguese',versions:[
+  {c:'PT',doc:'Independent Contractor Agreement', versions:[
     v(2,'active','2026-07-01',431,'GDPR data-processing clauses aligned with 2026 policy.',ME),
     v(1,'superseded','2025-09-15',188,'Initial agreement.','L. Ortiz')]},
-  {c:'PE',doc:'Independent Contractor Agreement',lang:'Spanish',versions:[
+  {c:'PE',doc:'Independent Contractor Agreement', versions:[
     v(1,'active','2026-01-10',77,'Initial agreement.',ME)]},
-  {c:'AR',doc:'Master Services Agreement',lang:'Spanish',versions:[
+  {c:'AR',doc:'Master Services Agreement', versions:[
     v(1,'draft',null,0,'',ME,'2026-06-08','MSA_Argentina_2026_ES.pdf')]},
-  {c:'MY',doc:'Independent Contractor Agreement',lang:'English',versions:[
+  {c:'MY',doc:'Independent Contractor Agreement', versions:[
     v(1,'draft',null,0,'',ME,'2026-06-08','ICA_Malaysia_2026_EN.pdf')]},
-  {c:'VN',doc:'Independent Contractor Agreement',lang:'Vietnamese',versions:[
+  {c:'VN',doc:'Independent Contractor Agreement', versions:[
     v(1,'active','2026-05-07',364,'Initial agreement.','T. Nguyen')]},
-  {c:'ID',doc:'Independent Contractor Agreement',lang:'Bahasa',versions:[
+  {c:'ID',doc:'Independent Contractor Agreement', versions:[
     v(4,'active','2026-05-05',1204,'Law 24/2009 language compliance review.',ME),
     v(3,'superseded','2025-12-01',900,'Clause 12 rewrite.',ME),
     v(2,'superseded','2025-06-01',611,'Payment schedule.',ME),
     v(1,'superseded','2025-01-04',300,'Initial agreement.','L. Ortiz')]},
-  {c:'ES',doc:'Master Services Agreement',lang:'Spanish',versions:[
+  {c:'CO',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-07-22',148,'Rate schedule update.',ME),
+    v(1,'superseded','2026-02-03',61,'Initial agreement.','L. Ortiz')]},
+  {c:'PH',doc:'Independent Contractor Agreement', versions:[
+    v(3,'active','2026-06-30',2140,'Clause 4 clarification.',ME),
+    v(2,'superseded','2025-11-18',1502,'Payment terms.',ME),
+    v(1,'superseded','2025-04-02',780,'Initial agreement.','L. Ortiz')]},
+  {c:'BR',doc:'Master Services Agreement', versions:[
+    v(1,'active','2026-06-11',309,'Initial agreement.','T. Nguyen')]},
+  {c:'MX',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-04-19',433,'Annual review.',ME),
+    v(1,'superseded','2025-07-07',210,'Initial agreement.',ME)]},
+  {c:'IN',doc:'Independent Contractor Agreement', versions:[
+    v(5,'active','2026-08-03',3866,'Clause 11 rewrite.',ME),
+    v(4,'superseded','2026-01-20',2901,'Tax wording.',ME),
+    v(3,'superseded','2025-08-14',1988,'Payment schedule.','J. Park'),
+    v(2,'superseded','2025-03-05',1204,'Clause 6 update.',ME),
+    v(1,'superseded','2024-10-01',540,'Initial agreement.','L. Ortiz')]},
+  {c:'PK',doc:'Independent Contractor Agreement', versions:[
+    v(1,'active','2026-05-28',612,'Initial agreement.','T. Nguyen')]},
+  {c:'BD',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-03-16',877,'Dispute resolution added.',ME),
+    v(1,'superseded','2025-09-09',402,'Initial agreement.',ME)]},
+  {c:'NG',doc:'Independent Contractor Agreement', versions:[
+    v(1,'draft',null,0,'',ME,'2026-07-30','ICA_Nigeria_2026_draft.pdf')]},
+  {c:'KE',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-02-24',255,'Annual review.','J. Park'),
+    v(1,'superseded','2025-05-12',118,'Initial agreement.','J. Park')]},
+  {c:'ZA',doc:'Master Services Agreement', versions:[
+    v(1,'active','2026-01-30',196,'Initial agreement.',ME)]},
+  {c:'EG',doc:'Independent Contractor Agreement', versions:[
+    v(3,'active','2026-07-14',1031,'Clause 9 indemnity.',ME),
+    v(2,'superseded','2025-12-19',744,'Payment terms.',ME),
+    v(1,'superseded','2025-06-23',330,'Initial agreement.','L. Ortiz')]},
+  {c:'MA',doc:'Independent Contractor Agreement', versions:[
+    v(1,'active','2025-10-08',87,'Initial agreement.','L. Ortiz')]},
+  {c:'ES',doc:'Master Services Agreement', versions:[
     v(3,'draft',null,0,'',ME,'2026-08-05','MSA_Spain_2026_ES_rev.pdf'),
     v(2,'active','2026-05-04',522,'Annual review.',ME),
     v(1,'superseded','2025-03-01',241,'Initial agreement.','L. Ortiz')]},
@@ -388,7 +439,7 @@ const nextVersion=r=>r?Math.max(0,...r.versions.map(x=>x.n))+1:1;   // next free
    is resumed rather than skipped, so versions stay consecutive. */
 const pendingV=r=>{const d=r?byStatus(r,'draft'):null;return d?d.n:nextVersion(r);};
 const STATUS_META={active:['p-active','Active'],draft:['p-draft','Draft'],
-                   superseded:['p-super','Superseded']};
+                   superseded:['p-super','Replaced']};
 const fmt=d=>{if(!d)return '\u2014';const[y,m,dd]=d.split('-');return `${m}/${dd}/${y}`;};   // display only — data stays ISO
 /* Effective from = when the live version went live (publish date, since there's no scheduling).
    Last update  = the most recent change to anything for this country, drafts included. */
@@ -400,16 +451,25 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&g
 
 /* =================== TABLE =================== */
 let FILTER='all';
-let SORT={key:'updated',dir:'desc'};   // most recently touched first
+let FLASH=null;   // country whose row was just changed
+function flashRow(c){FLASH=c;}
+const PER_PAGE=10;
+let PAGE=1;
+function goPage(n){PAGE=n;render();document.querySelector('.card').scrollIntoView({block:'start',behavior:'smooth'});}
+/* Recency by default: with pagination, an alphabetical sort can bury a just-published
+   country several pages deep. Country stays one click away for browsing, and search
+   handles "find a known country" better than either sort does. */
+let SORT={key:'updated',dir:'desc'};
 function setSort(key){
-  SORT = SORT.key===key ? {key,dir:SORT.dir==='desc'?'asc':'desc'} : {key,dir:'desc'};
-  render();
+  SORT = SORT.key===key ? {key,dir:SORT.dir==='desc'?'asc':'desc'}
+                        : {key,dir:key==='country'?'asc':'desc'};
+  PAGE=1; render();
 }
 function sortIcon(key){
   const on=SORT.key===key;
   return `<span class="sorticon"><i class="up${on&&SORT.dir==='asc'?'':' off'}"></i><i class="dn${on&&SORT.dir==='desc'?'':' off'}"></i></span>`;
 }
-function setFilter(f,el){FILTER=f;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');render();}
+function setFilter(f,el){FILTER=f;PAGE=1;document.querySelectorAll('.chip').forEach(c=>c.classList.remove('on'));el.classList.add('on');render();}
 
 function render(){
   const q=(document.getElementById('q').value||'').toLowerCase();
@@ -422,7 +482,7 @@ function render(){
     if(FILTER!=='all') return dstatus(r)===FILTER;
     return true;
   });
-  const key=r=>SORT.key==='effective'?effectiveFrom(r):lastUpdate(r);
+  const key=r=>SORT.key==='effective'?effectiveFrom(r):SORT.key==='updated'?lastUpdate(r):C(r.c).n;
   rows.sort((a,b)=>{
     const x=key(a), y=key(b);
     if(!x&&!y) return C(a.c).n.localeCompare(C(b.c).n);
@@ -437,6 +497,15 @@ function render(){
     return C(a.c).n.localeCompare(C(b.c).n);
   });
 
+  // a just-changed row may sit on another page — follow it there
+  if(FLASH){
+    const i=rows.findIndex(r=>r.c===FLASH);
+    if(i>=0) PAGE=Math.floor(i/PER_PAGE)+1;
+  }
+  const total=rows.length, pages=Math.max(1,Math.ceil(total/PER_PAGE));
+  PAGE=Math.min(Math.max(1,PAGE),pages);
+  const from=(PAGE-1)*PER_PAGE, pageRows=rows.slice(from,from+PER_PAGE);
+
   if(!rows.length){
     document.getElementById('tableSlot').innerHTML=
       `<div class="emptystate"><div class="big">⊘</div><h3>No contracts match</h3>
@@ -446,13 +515,10 @@ function render(){
   const tr=r=>{
     const ds=dstatus(r), cc=C(r.c), vv=cur(r), [pc,pl]=STATUS_META[ds];
     const drft = ds!=='draft' && byStatus(r,'draft');
-    return `<tr onclick="openRow('${r.c}')">
+    return `<tr data-c="${r.c}" onclick="openRow('${r.c}')">
       <td><div class="cty"><span class="fl">${cc.f}</span>${cc.n}</div></td>
-      <td><div class="doc"><span>
-        <span class="nm">${esc(r.doc)}</span>
-        ${drft?`<div class="sideline">✎ V${drft.n} draft in progress</div>`:''}
-      </span></div></td>
-      <td class="mono">V${vv.n}</td>
+      <td><div class="doc"><span><span class="nm">${esc(r.doc)}</span></span></div></td>
+      <td class="mono">V${vv.n}${drft?`<div class="vsub">V${drft.n} draft</div>`:''}</td>
       <td><span class="pill ${pc}">${pl}</span></td>
       <td class="mono">${fmt(effectiveFrom(r))}</td>
       <td class="mono">${fmt(lastUpdate(r))}</td>
@@ -461,12 +527,29 @@ function render(){
       </td>
     </tr>`;
   };
+  setTimeout(()=>{
+    if(!FLASH) return;
+    const tr=document.querySelector(`tbody tr[data-c="${FLASH}"]`); FLASH=null;
+    if(!tr) return;
+    tr.classList.add('flash');
+    tr.scrollIntoView({block:'nearest',behavior:'smooth'});
+    setTimeout(()=>tr.classList.remove('flash'),2600);
+  },0);
   document.getElementById('tableSlot').innerHTML=`<table><thead><tr>
-      <th>Country</th><th>Contract</th><th>Version</th><th>Status</th>
+      <th class="sortable" onclick="setSort('country')"><span class="thsort">Country${sortIcon('country')}</span></th>
+      <th>Contract</th><th>Version</th><th>Status</th>
       <th class="sortable" onclick="setSort('effective')"><span class="thsort">Effective From${sortIcon('effective')}</span></th>
       <th class="sortable" onclick="setSort('updated')"><span class="thsort">Last Update${sortIcon('updated')}</span></th>
-      <th></th>
-    </tr></thead><tbody>${rows.map(tr).join('')}</tbody></table>`;
+      <th>Actions</th>
+    </tr></thead><tbody>${pageRows.map(tr).join('')}</tbody></table>
+    ${pages>1?`<div class="pager">
+      <span class="pinfo">${from+1}–${from+pageRows.length} of ${total}</span>
+      <div class="pbtns">
+        <button class="pbtn" ${PAGE===1?'disabled':''} onclick="goPage(${PAGE-1})">‹</button>
+        ${Array.from({length:pages},(_,i)=>i+1).map(n=>
+          `<button class="pbtn ${n===PAGE?'on':''}" onclick="goPage(${n})">${n}</button>`).join('')}
+        <button class="pbtn" ${PAGE===pages?'disabled':''} onclick="goPage(${PAGE+1})">›</button>
+      </div></div>`:''}`;
 }
 
 function closeMenu(){const m=document.getElementById('rowmenu');if(m)m.remove();}
@@ -475,11 +558,10 @@ function menu(e,c){
   const r=rowFor(c), drft=byStatus(r,'draft'), av=byStatus(r,'active');
   const d=document.createElement('div'); d.className='menu'; d.id='rowmenu';
   d.innerHTML=`
-    <button onclick="closeMenu();openWizard('${c}')">${drft?`Resume V${drft.n} draft`:'Upload new version'}</button>
+    <button onclick="closeMenu();openWizard('${c}')">${drft?`Resume editing V${drft.n} draft`:'Upload new version'}</button>
     ${av?`<button onclick="closeMenu();viewContract('${c}')">View contract</button>`:''}
     <div class="sep"></div>
     <button onclick="closeMenu();history_('${c}')">Version history</button>
-    ${av?`<button onclick="closeMenu();toast('Signing audit exported (CSV)')">Download signing audit</button>`:''}
     ${drft?`<div class="sep"></div>
       <button class="dz" onclick="closeMenu();confirmDeleteDraft('${c}')">Delete V${drft.n} draft</button>`:''}`;
   document.body.appendChild(d);
@@ -527,20 +609,17 @@ function viewContract(c){
       <div class="review">
         <div class="rr">
           <div class="c"><div class="k">Document Name</div><div class="v">${esc(r.doc)}</div></div>
-          <div class="c"><div class="k">Language</div><div class="v">${r.lang}</div></div>
+          <div class="c"><div class="k">Version</div><div class="v">V${av.n}</div></div>
         </div>
         <div class="rr">
           <div class="c"><div class="k">Effective From</div><div class="v">${fmt(av.published)}</div></div>
-          <div class="c"><div class="k">Version</div><div class="v">V${av.n}</div></div>
+          <div class="c"><div class="k">File</div><div class="v"><button class="filelink" onclick="toast('Would open ${esc(av.file)} in the document viewer — download available there')"><span class="fi">▤</span>${esc(av.file)}</button></div></div>
         </div>
-        <div class="rr"><div class="c full"><div class="k">File</div>
-          <div class="v"><button class="filelink" onclick="toast('Would open ${esc(av.file)} in the document viewer — download available there')">
-            <span class="fi">▤</span>${esc(av.file)}</button></div></div></div>
         ${av.note?`<div class="rr"><div class="c full"><div class="k">Change Note</div>
           <div class="v" style="font-weight:400">${esc(av.note)}</div></div></div>`:''}
       </div>
       ${drft?`<div class="inl i-info"><span class="i">✎</span><span>
-        <b>A V${drft.n} draft is already in progress.</b> Resuming picks it up where you left off — V${av.n} keeps serving until you publish it.</span></div>`:''}
+        <b>A V${drft.n} draft is already in progress.</b> Resuming editing picks it up where you left off — V${av.n} keeps serving until you publish it.</span></div>`:''}
       <div style="margin-top:14px"><button class="linkbtn ${VIEW_EXPANDED?'open':''}" onclick="VIEW_EXPANDED=!VIEW_EXPANDED;viewContract('${c}')">
         ${VIEW_EXPANDED?'Hide version history':`View all ${r.versions.length} version${r.versions.length===1?'':'s'}`}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -550,8 +629,8 @@ function viewContract(c){
     <div class="mfoot">
       <div class="foothelp">${drft?`Publishing this draft goes out as <strong>V${drft.n}</strong>.`
                                   :`Uploading a new version publishes as <strong>V${pendingV(r)}</strong>.`}
-        V${av.n} stays in the record.</div>
-      <button class="btn pri" onclick="openWizard('${c}')">${drft?`Resume V${drft.n} draft`:'Upload new version'}</button>
+        V${av.n} is replaced and stays in version history.</div>
+      <button class="btn pri" onclick="openWizard('${c}')">${drft?`Resume editing V${drft.n} draft`:'Upload new version'}</button>
     </div>
   </div>`);
 }
@@ -568,8 +647,7 @@ function timelineHTML(r){
           :`Published ${fmt(x.published)} by ${x.by}<br>${x.signers.toLocaleString()} agent${x.signers===1?'':'s'} signed`}</div>
         ${x.note?`<div class="vnote">${esc(x.note)}</div>`
                 :`<div class="vnote" style="color:var(--ink3);font-style:italic">No change note</div>`}
-        <div class="vacts"><button onclick="toast('Would open ${esc(x.file)} in the document viewer')">View document</button>
-          ${isDraft?'':`<button onclick="toast('Signing audit exported (CSV)')">Signing audit</button>`}</div>
+        <div class="vacts"><button onclick="toast('Would open ${esc(x.file)} in the document viewer')">View document</button></div>
       </div>`}).join('')}
   </div>`;
 }
@@ -595,7 +673,7 @@ function openWizard(prefill){
   W={step:1,c:prefill||null,locked:!!prefill,
      doc:r?r.doc:'Independent Contractor Agreement',
      file:base&&base.file?{name:base.file,size:1.9,pages:16,hash:base.hash}:null,
-     lang:r?r.lang:null, note:'', attest:false,
+     note:'', attest:false,
      forking:!!(r&&byStatus(r,'active')&&!drft), existingDraft:!!drft, fileErr:null};
   drawWizard();
 }
@@ -605,8 +683,10 @@ const wNextV=()=>pendingV(wRow());
 
 function drawWizard(){
   const s=W.step, r=wRow(), cc=wCountry();
-  const title = !W.locked ? 'Upload legal contract'
-              : W.forking ? `New version — ${cc.n}` : `Edit draft — ${cc.n}`;
+  const title = !cc ? 'Upload legal contract'
+              : W.existingDraft ? `Edit draft — ${cc.n}`
+              : W.forking ? `New version — ${cc.n}`
+              : 'Upload legal contract';
   scrim(`<div class="modal">
     <div class="mhead"><h3>${title}</h3>
       <p>Attach the country-specific agreement agents must sign during onboarding.</p>
@@ -656,17 +736,11 @@ function refreshCount(el,max){
 }
 
 const SAMPLES=[
-  {name:'ICA_2026_local.pdf',size:1.8,lang:'match',label:'PDF in the country language'},
-  {name:'ICA_Master_EN.pdf',size:2.1,lang:'English',label:'English PDF → shows the language warning'},
+  {name:'ICA_2026_v1.pdf',size:1.8,label:'Sample contract'},
+  {name:'ICA_2026_revised.pdf',size:2.1,label:'Alternative sample'},
 ];
 function step2(){
   const cc=wCountry(), nv=wNextV(), f=W.file;
-  let langWarn='';
-  if(f&&W.lang&&cc.strictLang&&W.lang!==cc.lang){
-    langWarn=`<div class="inl i-warn"><span class="i">▲</span><span>
-      <b>${cc.n} expects contracts in ${cc.lang}.</b> This document appears to be in ${W.lang}.
-      ${cc.c==='ID'?'Indonesian law (24/2009) requires contracts with local parties in Bahasa. ':''}Check you've uploaded the right file.</span></div>`;
-  }
   return `
   <div class="f">
     <label>Contract Document</label>
@@ -675,18 +749,13 @@ function step2(){
         <div style="flex:1">
           <div class="fn">${esc(f.name)}</div>
           <div class="fm">${f.size} MB · ${f.pages} pages</div>
-          <div class="langchip">Language:
-            <select onchange="W.lang=this.value;drawWizard()">
-              ${LANGS.map(l=>`<option ${l===W.lang?'selected':''}>${l}</option>`).join('')}
-            </select><span style="color:var(--ink3)">detected</span>
-          </div>
         </div>
-        <button class="rm" onclick="W.file=null;W.lang=null;drawWizard()" title="Remove file" aria-label="Remove file">
+        <button class="rm" onclick="W.file=null;drawWizard()" title="Remove file" aria-label="Remove file">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
             <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
-      </div>${langWarn}`
+      </div>`
     :`<div class="dz" ondragover="event.preventDefault();this.classList.add('drag')"
           ondragleave="this.classList.remove('drag')" ondrop="dropFile(event)">
         <div class="up"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -704,13 +773,13 @@ function step2(){
 
   <div class="f">
     <label>Version<span class="info" tabindex="0">i<span class="tip">Assigned automatically.
-      ${nv>1?`V${nv-1} moves to Superseded and stays in the record.`:'This is the first version for this country.'}
+      ${nv>1?`V${nv-1} is replaced and stays in version history.`:'This is the first version for this country.'}
       Takes effect the moment you publish.</span></span></label>
     <div><span class="vchip">Publishing as V${nv}</span></div>
   </div>
 
   <div class="f">
-    <label>Change Note <span class="opt">(Optional)</span></label>
+    <label>Change Note</label>
     <textarea maxlength="300" placeholder="${nv>1?'What changed in this version, and why?':'Summarise what this document covers.'}"
       oninput="W.note=this.value;refreshCount(this,300)">${esc(W.note)}</textarea>
     <div class="cnt">${W.note.length}/300</div>
@@ -718,9 +787,8 @@ function step2(){
 }
 
 function pickSample(i){
-  const s=SAMPLES[i], cc=wCountry(); W.fileErr=null;
+  const s=SAMPLES[i]; W.fileErr=null;
   W.file={name:s.name,size:s.size,pages:Math.round(s.size*7)+4,hash:'sha256:'+(i*104729+7).toString(16).padStart(8,'0')+'…'};
-  W.lang = s.lang==='match' ? cc.lang : s.lang;
   drawWizard();
 }
 function realFile(el){
@@ -729,7 +797,7 @@ function realFile(el){
   if(!/\.pdf$/i.test(f.name)){W.fileErr=`<b>${esc(f.name)} isn't a PDF.</b> Only PDF is accepted.`;return drawWizard();}
   if(mb>20){W.fileErr=`<b>${esc(f.name)} is ${mb} MB.</b> The limit is 20 MB. Compress the PDF and try again.`;return drawWizard();}
   W.file={name:f.name,size:mb,pages:'—',hash:'sha256:'+Math.abs(f.size*31).toString(16).slice(0,8)+'…'};
-  W.lang=wCountry().lang; drawWizard();
+  drawWizard();
 }
 function dropFile(e){e.preventDefault();e.currentTarget.classList.remove('drag');
   const f=e.dataTransfer.files[0]; if(f) realFile({files:[f]});}
@@ -746,7 +814,7 @@ function cdropOptions(q){
   if(!el.length) return `<div class="cnone">No countries match \u201C${esc(q)}\u201D</div>`;
   return el.map(x=>{const r=rowFor(x.c), dr=r?byStatus(r,'draft'):null;
     const h=(!r||!r.versions.length)?'No contract yet'
-           :dr?`Resumes V${dr.n} draft`
+           :dr?`Resumes editing V${dr.n} draft`
            :`Active V${cur(r).n} \u00B7 creates V${nextVersion(r)}`;
     return`<button class="copt" onclick="pickCountry('${x.c}')"><span class="fl">${x.f}</span>${x.n}
       <span class="hintx">${h}</span></button>`}).join('');
@@ -777,8 +845,17 @@ function toggleCdrop(e){
   setTimeout(()=>document.addEventListener('click',cdropOff,true),0);
 }
 function pickCountry(c){
-  closeCdrop(); W.c=c;
-  if(!W.lang) W.lang=C(c).lang;
+  closeCdrop();
+  const r=rowFor(c), drft=r?byStatus(r,'draft'):null;
+  const base=drft || (r?byStatus(r,'active'):null);
+  // re-derive the whole wizard for the chosen country: resume its draft, or fork its live version
+  W.c=c;
+  W.doc  = r ? r.doc : 'Independent Contractor Agreement';
+  W.file = base && base.file ? {name:base.file,size:1.9,pages:16,hash:base.hash} : null;
+  W.note = drft ? (drft.note||'') : '';
+  W.existingDraft = !!drft;
+  W.forking = !!(r && byStatus(r,'active') && !drft);
+  W.fileErr = null;
   drawWizard();   // nothing is written yet — the admin has to save or publish
 }
 
@@ -787,14 +864,15 @@ function canContinue(){
   if(W.step===3) return !!W.attest;
   const cc=wCountry();
   if(!W.file) return false;
+  if(!W.note.trim()) return false;   // required for tracking and accountability
   return true;
 }
 function refreshFoot(){const b=document.querySelector('.mfoot .btn.pri');if(b)b.disabled=!canContinue();}
 
 function commit(mode){
   let r=wRow();
-  if(!r){r={c:W.c,doc:W.doc,lang:W.lang||C(W.c).lang,versions:[]};ROWS.push(r);}
-  r.doc=W.doc; r.lang=W.lang||r.lang; touch(r);
+  if(!r){r={c:W.c,doc:W.doc,versions:[]};ROWS.push(r);}
+  r.doc=W.doc; touch(r);
   let ver=byStatus(r,'draft');
   if(!ver){ver=v(nextVersion(r),'draft',null,0,W.note,ME,TODAY,null);r.versions.unshift(ver);}
   ver.note=W.note; ver.updated=TODAY;
@@ -804,7 +882,7 @@ function commit(mode){
   const av=byStatus(r,'active'); if(av) av.status='superseded';
   ver.status='active'; ver.published=TODAY; ver.by=ME;
 }
-function saveDraft(){const n=C(W.c).n, v=wNextV();commit('draft');closeScrim();render();
+function saveDraft(){const n=C(W.c).n, v=wNextV(), c=W.c;commit('draft');flashRow(c);closeScrim();render();
   toast(`V${v} draft saved for ${n}. Open the row any time to pick it back up.`,'good');}
 /* Cancel genuinely discards. If there's unsaved work, say so rather than
    silently throwing it away — but never silently keep it either. */
@@ -832,7 +910,7 @@ function dirty(){
 function deleteDraft(){
   const r=wRow(), d=byStatus(r,'draft'); if(!d)return;
   r.versions=r.versions.filter(x=>x!==d);
-  touch(r);   // the deletion is itself a change to this country
+  touch(r); flashRow(r.c);   // the deletion is itself a change to this country
   if(!r.versions.length) ROWS=ROWS.filter(x=>x!==r);
   closeScrim(); render(); toast('Draft deleted.','good');
 }
@@ -848,7 +926,6 @@ function step3(){
     </div>
     <div class="rr">
       <div class="c"><div class="k">Document Name</div><div class="v">${esc(W.doc)}</div></div>
-      <div class="c"><div class="k">Language</div><div class="v">${W.lang}</div></div>
     </div>
     <div class="rr">
       <div class="c"><div class="k">Effective From</div><div class="v">On publish</div></div>
@@ -858,7 +935,7 @@ function step3(){
       <div class="v" style="font-weight:400">${esc(W.note)||'—'}</div></div></div>
   </div>
   <div class="inl i-mute"><span class="i">🔒</span><span><b>This can't be undone.</b>
-    ${prev?`V${prev.n} moves to Superseded and stays in the record.`
+    ${prev?`V${prev.n} is replaced and stays in version history.`
           :`Published versions can't be edited — only replaced by a later version.`}</span></div>
   <div class="attest">
     <input type="checkbox" id="att" ${W.attest?'checked':''} onchange="W.attest=this.checked;refreshFoot()">
@@ -870,8 +947,8 @@ function doPublish(){
   const cc=wCountry(), nv=wNextV(), r=wRow();
   const prev=r?byStatus(r,'active'):null;
   const n=prev?prev.signers:0;
-  commit('publish'); closeScrim(); render(); W=null;
-  toast(`V${nv} published for ${cc.n}.`+(n?` ${n.toLocaleString()} existing agents will be reminded to sign it.`:''),'good');
+  commit('publish'); flashRow(cc.c); closeScrim(); render(); W=null;
+  toast(`V${nv} published for ${cc.n}. New agents will sign this version.`,'good');
 }
 
 /* =================== PLUMBING =================== */
