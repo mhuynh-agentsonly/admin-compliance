@@ -13,7 +13,7 @@
   --bg:#f6f7fb; --panel:#fff; --hover:#f5f8fe;
   --blue:#2f6fed; --blue-d:#2159cf; --blue-s:#eaf1fe;
   --blue-on-s:#2159cf;   /* blue text ON blue-s: #2f6fed is 4.0:1 there, this is 5.4:1 */
-  --navicon:#3d7fd6; --tabbg:#e9f5fa; --tabink:#566e82;   /* 4.8:1 on the tab band */
+  --dot-active:#05ac87; --navicon:#3d7fd6; --tabbg:#e9f5fa; --tabink:#566e82;   /* 4.8:1 on the tab band */
   --grey:#7b8797;                                    /* icons only — 3.6:1, UI-component floor is 3:1 */
   --thbg:#f9fafc; --brand:#12b76a;
   --green:#0a7048; --green-s:#e6f7ef;              /* 5.5:1 — the mock's green is 2.8:1 */
@@ -293,15 +293,22 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 .filelink .fi{font-size:11px;opacity:.7}
 
 .expando{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
-.tl{position:relative;padding-left:22px}
-.tl::before{content:'';position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:var(--line)}
+/* Timeline axis: the 12px dot and the 2px connector share one centre line at x=6.
+   Each entry draws its own connector down to the next dot, so the spine starts at the
+   first dot and stops at the last instead of overshooting both. */
+.tl{position:relative;padding-left:24px}
 .tlv{position:relative;margin-bottom:18px}
-.tlv::before{content:'';position:absolute;left:-21px;top:5px;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--line2)}
-.tlv.cur::before{border-color:var(--green);background:var(--green)}
+/* box-sizing:border-box from the * rule does NOT reach pseudo-elements — set it here or the
+   2px border makes the dot 18px wide and its centre no longer lands on the connector. */
+.tlv::before{content:'';position:absolute;box-sizing:border-box;left:-24px;top:4.6px;
+  width:14px;height:14px;z-index:1;border-radius:50%;background:#fff;border:2px solid var(--line2)}
+.tlv::after{content:'';position:absolute;left:-18px;top:18.6px;bottom:-22.6px;width:2px;background:var(--line)}
+.tlv:last-child::after{display:none}
+.tlv.cur::before{border-color:var(--dot-active);background:var(--dot-active)}
 .tlv .vh{display:flex;align-items:center;gap:8px;margin-bottom:3px}
 .tlv .vn{font-weight:700;font-size:13.5px}
 .tlv .vm{font-size:12.2px;color:var(--ink3);margin-bottom:6px}
-.tlv .vnote{font-size:12.6px;color:var(--ink2);background:var(--hover);border-radius:6px;padding:8px 10px;margin-bottom:7px}
+.tlv .vnote{font-size:12.6px;color:var(--ink2);background:#f9fafb;border-radius:6px;padding:8px 10px;margin-bottom:7px}
 .tlv .vacts button{font-size:11.8px;padding:4px 9px;border:1px solid var(--line2);background:#fff;border-radius:6px;color:var(--ink2);margin-right:6px}
 .tlv .vacts button:hover{background:var(--hover)}
 
@@ -678,7 +685,7 @@ function viewContract(c){
           <div class="c"><div class="k">Effective From</div><div class="v">${fmt(av.published)}</div></div>
           <div class="c"><div class="k">File</div><div class="v"><button class="filelink" onclick="toast('Would open ${esc(av.file)} in the document viewer — download available there')"><span class="fi">▤</span>${esc(av.file)}</button></div></div>
         </div>
-        ${av.note?`<div class="rr"><div class="c full"><div class="k">Change Note</div>
+        ${av.note?`<div class="rr"><div class="c full"><div class="k">Change Note (Internal Only)</div>
           <div class="v" style="font-weight:400">${esc(av.note)}</div></div></div>`:''}
       </div>
       ${drft?`<div class="inl i-info"><span class="i">✎</span><span>
