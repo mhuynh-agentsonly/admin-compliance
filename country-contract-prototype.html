@@ -4,13 +4,19 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Country-Level Contract — Prototype v3</title>
+<!-- DM Sans, used from a local install. No webfont request, so the file stays self-contained. -->
 <style>
 :root{
-  --ink:#111827; --ink2:#4b5563; --ink3:#6b7280;   /* 4.8:1 on white — was #8b93a1 at 3.1:1 */
-  --line:#e5e7eb; --line2:#d1d5db;
-  --bg:#f3f4f6; --panel:#fff; --hover:#f9fafb;
-  --blue:#2563eb; --blue-d:#1d4ed8; --blue-s:#eff6ff;
-  --green:#059669; --green-s:#ecfdf5;
+  /* Admin-portal shell tokens, matched to the Country Admin design */
+  --ink:#17263f; --ink2:#46586e; --ink3:#6b7280;   /* ink3 = 4.8:1 on white */
+  --line:#eef1f5; --line2:#dde1e8; --line3:#e8ebf0;
+  --bg:#f6f7fb; --panel:#fff; --hover:#f5f8fe;
+  --blue:#2f6fed; --blue-d:#2159cf; --blue-s:#eaf1fe;
+  --blue-on-s:#2159cf;   /* blue text ON blue-s: #2f6fed is 4.0:1 there, this is 5.4:1 */
+  --navicon:#3d7fd6; --tabbg:#e9f5fa; --tabink:#566e82;   /* 4.8:1 on the tab band */
+  --grey:#7b8797;                                    /* icons only — 3.6:1, UI-component floor is 3:1 */
+  --thbg:#f9fafc; --brand:#12b76a;
+  --green:#0a7048; --green-s:#e6f7ef;              /* 5.5:1 — the mock's green is 2.8:1 */
   --amber:#b45309; --amber-s:#fffbeb;
   --red:#dc2626; --red-s:#fef2f2;
   --slate-s:#f1f3f5;
@@ -20,34 +26,57 @@
 }
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
-  font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Inter,Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+  font:14px/1.5 "DM Sans",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
 button{font:inherit;cursor:pointer}
 input,select,textarea{font:inherit;color:var(--ink)}
 
 
-.app{display:grid;grid-template-columns:212px 1fr;min-height:100vh}
-.side{background:var(--panel);border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:2px}
-.brandrow{display:flex;align-items:center;gap:8px;padding:0 8px 2px}
-.brandmark{width:18px;height:18px;border-radius:4px;background:var(--green);display:grid;place-items:center;color:#fff;font-size:9px;font-weight:800}
-.brandrow span{font-size:11px;color:var(--ink3);line-height:1.15}
-.portal{padding:10px 8px 4px;font-size:16px;font-weight:700;letter-spacing:-.01em}
-.envchip{margin:0 8px 14px;display:inline-block;background:var(--blue-s);color:var(--blue);font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:5px;width:fit-content}
-.nav{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:6px;color:var(--ink2);font-size:13.3px}
-.nav.on{background:var(--blue-s);color:var(--blue);font-weight:600}
-.nav .ic{width:15px;text-align:center;opacity:.75;font-size:12px}
+.app{display:grid;grid-template-columns:210px minmax(0,1fr);min-height:100vh}
+.side{background:var(--panel);padding:20px 12px 14px;display:flex;flex-direction:column}
+.brandrow{display:flex;align-items:center;gap:9px;padding:0 8px 14px}
+.brandmark{width:19px;height:19px;display:grid;grid-template-columns:repeat(3,1fr);gap:2.5px;flex-shrink:0}
+.brandmark i{display:block;border-radius:50%;background:var(--brand)}
+.brandrow span{font-size:12px;font-weight:700;color:var(--ink);line-height:1.12;letter-spacing:-.01em}
+.portal{padding:0 8px 8px;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.envchip{margin:0 8px 16px;display:inline-block;background:var(--blue-s);color:var(--blue);
+  font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;width:fit-content}
+.navlist{display:flex;flex-direction:column;gap:2px}
+.navgap{flex:1;min-height:14px}
+.nav{position:relative;display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:7px;
+  color:#33475b;font-size:13.4px;font-weight:500;flex-shrink:0}
+.nav svg{width:19px;height:19px;flex-shrink:0;color:var(--navicon)}
+.nav:hover{background:#f7f9fc}
+.nav.on{background:#eff4fb;color:var(--ink);font-weight:600}
+/* the design marks the active item on its trailing edge, not with a coloured label */
+.nav.on::after{content:'';position:absolute;right:-12px;top:0;bottom:0;width:3px;
+  background:var(--blue);border-radius:3px 0 0 3px}
+.navfoot{border-top:1px solid var(--line);margin:8px -4px 0;padding-top:10px}
+.build{padding:12px 10px 0;font-size:10.5px;color:var(--ink3)}
 
-.main{padding:22px 26px 70px}
-h1.page{font-size:20px;margin:0 0 14px;letter-spacing:-.01em}
-.tabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin-bottom:20px}
-.tabs a{font-size:13.3px;color:var(--ink2);padding:0 0 10px;border-bottom:2px solid transparent;text-decoration:none}
-.tabs a.on{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.main{position:relative;padding:26px 30px 70px}
+.main::before{content:'';position:absolute;top:0;right:0;width:460px;height:215px;pointer-events:none;
+  background-image:radial-gradient(circle,#dbe0f0 1.05px,transparent 1.05px);background-size:15px 15px;
+  -webkit-mask-image:linear-gradient(to bottom left,#000,transparent 62%);
+          mask-image:linear-gradient(to bottom left,#000,transparent 62%)}
+.mainin{position:relative;z-index:1}
+h1.page{font-size:26px;font-weight:800;margin:0 0 18px;letter-spacing:-.025em}
 
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh);overflow:hidden}
-.chead{padding:16px 18px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
-.chead h2{font-size:15px;margin:0 0 2px}
-.chead p{margin:0;font-size:12.8px;color:var(--ink3)}
+/* the tabs live on a tinted band across the top of the page panel */
+.panel{background:var(--panel);border-radius:16px;padding-bottom:24px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.tabs{display:flex;gap:30px;padding:0 26px;background:var(--tabbg);border-radius:16px 16px 0 0;overflow-x:auto}
+.tabs a{font-size:13.6px;font-weight:600;color:var(--tabink);padding:19px 0 15px;
+  border-bottom:3px solid transparent;text-decoration:none;white-space:nowrap}
+.tabs a:hover{color:var(--ink2)}
+.tabs a.on{color:var(--ink);border-bottom-color:var(--blue)}
+.panelin{padding:24px 24px 0}
+
+.card{background:var(--panel);border:1px solid var(--line3);border-radius:12px;overflow:hidden}
+.chead{padding:18px 20px 16px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.chead h2{font-size:17px;font-weight:700;margin:0 0 3px;letter-spacing:-.015em}
+.chead p{margin:0;font-size:13px;color:var(--ink3)}
 .chead .sp{flex:1}
-.btn{border-radius:7px;padding:7px 13px;font-size:13px;border:1px solid var(--line2);background:#fff;color:var(--ink2);font-weight:500}
+.btn{border-radius:8px;padding:9px 15px;font-size:13px;border:1px solid var(--line2);background:#fff;color:var(--ink2);font-weight:600}
 .btn:hover{background:var(--hover)}
 .btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
 .btn.pri:hover{background:var(--blue-d)}
@@ -59,15 +88,21 @@ h1.page{font-size:20px;margin:0 0 14px;letter-spacing:-.01em}
 
 .toolbar{display:flex;gap:8px;align-items:center;padding:0 18px 14px;flex-wrap:wrap}
 .toolbar .sp{flex:1}
-.search{position:relative;width:280px;min-width:180px}
-.search input{width:100%;padding:7px 11px 7px 30px;border:1px solid var(--line2);border-radius:7px;font-size:13px;background:#fff}
-.search .mag{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--ink3);font-size:12px}
-.chip{border:1px solid var(--line2);background:#fff;color:var(--ink2);border-radius:999px;padding:5px 12px;font-size:12.5px}
-.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.search{position:relative;width:248px;min-width:170px}
+.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line2);border-radius:8px;
+  font-size:13px;background:#fff;color:var(--ink)}
+.search input::placeholder{color:var(--ink3)}
+.search input:focus{outline:2px solid var(--blue-s);border-color:var(--blue)}
+.search .mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--grey);
+  display:flex;pointer-events:none}
+.search .mag svg{width:15px;height:15px}
+.chip{border:0;background:transparent;color:#566e82;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:600}
+.chip:hover{color:var(--ink2);background:#f5f7fa}
+.chip.on{background:var(--blue-s);color:var(--blue-on-s)}
 
-table{width:100%;border-collapse:collapse}
-th{text-align:left;font-size:11.8px;font-weight:600;color:var(--ink3);
-  padding:9px 18px;background:var(--hover);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{text-align:left;font-size:12px;font-weight:600;color:var(--ink3);
+  padding:10px 12px;background:var(--thbg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
   white-space:nowrap}
 th.sortable{cursor:pointer;user-select:none}
 th.sortable:hover{color:var(--ink)}
@@ -77,8 +112,18 @@ th.sortable:hover{color:var(--ink)}
 .sorticon i.up{border-bottom:4px solid currentColor}
 .sorticon i.dn{border-top:4px solid currentColor}
 .sorticon i.off{opacity:.3}
-td{padding:11px 18px;border-bottom:1px solid var(--line);font-size:13.3px;vertical-align:middle}
-tbody tr{cursor:pointer;height:63px}   /* uniform rows whether or not a draft note is present */
+td{padding:7px 12px;border-bottom:1px solid var(--line);font-size:13.4px;vertical-align:middle}
+/* Percentages, not pixels: every column grows with the table instead of the document-name
+   column swallowing all the slack and leaving a void before Version on a wide screen.
+   Contract is the only auto column, so it still takes the remainder — just more slowly. */
+th:nth-child(1){width:15.5%}  /* Country        */
+th:nth-child(3){width:9.5%}   /* Version        */
+th:nth-child(4){width:10%}    /* Status         */
+th:nth-child(5){width:15%}    /* Effective From */
+th:nth-child(6){width:13.5%}  /* Last Update    */
+th:nth-child(7){width:8%}     /* Actions        */
+th:last-child,td.act{padding-left:4px;padding-right:6px}
+tbody tr{cursor:pointer;height:44px}   /* uniform rows whether or not a draft note is present */
 tbody tr:hover{background:var(--blue-s)}
 /* the row you just acted on announces itself, so the order can stay stable */
 tbody tr.flash{animation:flashrow 2.6s ease-out}
@@ -86,18 +131,21 @@ tbody tr.flash{animation:flashrow 2.6s ease-out}
   0%,45%{background:var(--blue-s);box-shadow:inset 3px 0 0 var(--blue)}
   100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
 tr:last-child td{border-bottom:0}
-.cty{display:flex;align-items:center;gap:9px;font-weight:500}
-.cty .fl{font-size:15px;line-height:1}
-.doc{display:flex;gap:8px;align-items:flex-start}
-.mutedline{font-size:11.3px;color:var(--ink3);margin-top:3px}
-.vsub{font-size:11.3px;color:var(--blue);margin-top:3px;font-weight:500}
-.pill{display:inline-block;font-size:11px;font-weight:600;padding:2.5px 9px;border-radius:999px;white-space:nowrap}
+.cty{display:flex;align-items:center;gap:10px;font-weight:600}
+.cty .fl{font-size:16px;line-height:1}
+.doc{display:flex;gap:8px;align-items:flex-start;min-width:0}
+.docname{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.doccell .nm{font-size:13.2px}
+.mutedline{font-size:11.3px;color:var(--ink3);margin-top:1px}
+.vsub{font-size:11.3px;color:var(--blue);font-weight:600;line-height:1.25;white-space:nowrap}
+td.mono{line-height:1.3}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
 .p-active{background:var(--green-s);color:var(--green)}
 .p-draft{background:var(--slate-s);color:var(--ink2)}
 .p-super{background:var(--slate-s);color:var(--ink2)}
-.mono{font-variant-numeric:tabular-nums;color:var(--ink2)}
-td.act{text-align:right;width:78px}
-th:last-child{text-align:right}
+.mono{font-variant-numeric:tabular-nums;color:var(--ink)}
+td.act{text-align:center;width:62px}
+th:last-child{text-align:left}
 td.act{position:relative}
 .menu{position:fixed;z-index:140;background:#fff;border:1px solid var(--line);
   border-radius:9px;box-shadow:var(--sh-lg);padding:5px;min-width:212px;text-align:left}
@@ -108,13 +156,15 @@ td.act{position:relative}
 .menu .sep{height:1px;background:var(--line);margin:5px 0}
 .kebab{border:0;background:transparent;color:var(--ink3);font-size:16px;padding:2px 7px;border-radius:5px;line-height:1}
 .kebab:hover{background:var(--line);color:var(--ink)}
-.pager{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.pager{display:flex;align-items:center;gap:12px;padding:14px 16px;flex-wrap:wrap}
 .pinfo{font-size:12.5px;color:var(--ink3)}
-.pbtns{margin-left:auto;display:flex;gap:4px}
-.pbtn{min-width:30px;height:30px;padding:0 8px;border:1px solid var(--line2);background:#fff;
-  border-radius:7px;font-size:12.8px;color:var(--ink2)}
-.pbtn:hover:not(:disabled){background:var(--hover)}
-.pbtn.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:600}
+.pbtns{margin-left:auto;display:flex;gap:6px;align-items:center}
+/* page numbers are borderless; only the arrows and the current page carry a shape */
+.pbtn{min-width:32px;height:32px;padding:0 8px;border:0;background:transparent;
+  border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2)}
+.pbtn:hover:not(:disabled){background:#f2f5f9}
+.pbtn.on{background:var(--blue-s);color:var(--blue-on-s)}
+.pbtn.arw{border:1px solid var(--line2);color:var(--ink2);font-weight:400;font-size:15px}
 .pbtn:disabled{opacity:.4;cursor:not-allowed}
 .emptystate{padding:56px 24px;text-align:center}
 .emptystate .big{font-size:26px;margin-bottom:10px;opacity:.4}
@@ -178,7 +228,8 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 .cdsearch input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--line2);border-radius:6px;
   font-size:13px;background:#fff}
 .cdsearch input:focus{outline:2px solid var(--blue-s);border-color:var(--blue)}
-.cdsearch .mag{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--ink3);
+.cdsearch .mag svg{width:15px;height:15px}
+.cdsearch .mag{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--grey);display:flex;pointer-events:none;
   font-size:12px;pointer-events:none}
 .cdlist{overflow:auto;padding:5px;flex:1}
 .cnone{padding:16px 12px;font-size:12.8px;color:var(--ink3);text-align:center}
@@ -271,45 +322,57 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
 
 <div class="app">
   <aside class="side">
-    <div class="brandrow"><div class="brandmark">A</div><span>Agents<br>Only</span></div>
+    <div class="brandrow"><div class="brandmark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>Agents<br>Only</span></div>
     <div class="portal">Admin Portal</div>
-    <div class="envchip">Production</div>
-    <div class="nav"><span class="ic">◎</span>Agents</div>
-    <div class="nav"><span class="ic">▤</span>Projects</div>
-    <div class="nav"><span class="ic">◈</span>Training</div>
-    <div class="nav"><span class="ic">▢</span>Wallet</div>
-    <div class="nav"><span class="ic">↧</span>Deposits</div>
-    <div class="nav"><span class="ic">↗</span>Referrals</div>
-    <div class="nav"><span class="ic">▦</span>Platform Rates</div>
-    <div class="nav on"><span class="ic">⊕</span>Country Admin</div>
-    <div class="nav"><span class="ic">◉</span>View as User</div>
-    <div class="nav"><span class="ic">✦</span>AI Assistants</div>
-    <div class="nav"><span class="ic">⛊</span>Admin Users</div>
+    <div class="envchip">Development</div>
+    <div class="navlist">
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.6 20c0-3.6 2.8-5.6 6.4-5.6s6.4 2 6.4 5.6"/><path d="M16.4 5.7a3.2 3.2 0 0 1 0 6.2"/><path d="M18.1 14.9c2 .6 3.3 2.2 3.3 5.1"/></svg>Agents</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13.5h6M9 17h4"/></svg>Projects</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 3.2 7.6 12 12l8.8-4.4z"/><path d="M3.2 12.4 12 16.8l8.8-4.4"/><path d="M3.2 16.9 12 21.3l8.8-4.4"/></svg>Training</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.6 12 4.2l9 5.4"/><path d="M5.6 10.4v8.4M9.9 10.4v8.4M14.1 10.4v8.4M18.4 10.4v8.4"/><path d="M3.4 20.2h17.2"/></svg>Wallet</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4v9.8"/><path d="M8.2 9.7 12 13.5l3.8-3.8"/><path d="M4.2 16.2V19a2 2 0 0 0 2 2h11.6a2 2 0 0 0 2-2v-2.8"/></svg>Deposits</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.6 20c0-3.6 2.8-5.6 6.4-5.6 1.3 0 2.5.3 3.5.8"/><path d="M16.2 6.4h5.2v5.2"/><path d="M21.4 6.4 15.6 12.2"/></svg>Referrals</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="3.4" width="17.2" height="17.2" rx="4.6"/><circle cx="9.2" cy="9.2" r="1.15"/><circle cx="14.8" cy="14.8" r="1.15"/><path d="M15.6 8.4 8.4 15.6"/></svg>Platform Rates</div>
+    <div class="nav on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4c2.4 2.3 3.7 5.3 3.7 8.6S14.4 18.3 12 20.6c-2.4-2.3-3.7-5.3-3.7-8.6S9.6 5.7 12 3.4z"/></svg>Country Admin</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.4 12S6 5.6 12 5.6 21.6 12 21.6 12 18 18.4 12 18.4 2.4 12 2.4 12z"/><circle cx="12" cy="12" r="3"/></svg>View as User</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.4l1.7 4.2 4.2 1.7-4.2 1.7L11 15.2 9.3 11 5.1 9.3 9.3 7.6z"/><path d="M18.2 15.6l.75 1.85 1.85.75-1.85.75-.75 1.85-.75-1.85-1.85-.75 1.85-.75z"/></svg>AI Assistants</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19 6v5.4c0 4.3-2.9 7.9-7 9.3-4.1-1.4-7-5-7-9.3V6z"/><circle cx="12" cy="10.3" r="2.1"/><path d="M8.5 16.5c.6-1.6 1.9-2.4 3.5-2.4s2.9.8 3.5 2.4"/></svg>Admin Users</div>
+    </div>
+    <div class="navgap"></div>
+    <div class="navfoot"><div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 4h3.2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3.2"/><path d="M9.6 8.4 6 12l3.6 3.6"/><path d="M6.2 12h8.6"/></svg>Logout</div></div>
+    <div class="build">ao-admin-portal: v0.0.74</div>
   </aside>
 
   <main class="main">
+   <div class="mainin">
     <h1 class="page">Country Admin</h1>
+    <div class="panel">
     <div class="tabs">
       <a href="#">Background Checks</a><a href="#">Onboarding</a>
       <a href="#" class="on">Legal Contracts</a><a href="#">Tax Details</a><a href="#">System Requirements</a>
     </div>
+    <div class="panelin">
 
     <div class="card">
       <div class="chead">
         <div><h2>Legal Contracts</h2>
           <p>Upload the agreement each agent signs during onboarding, per country.</p></div>
         <div class="sp"></div>
-        <button class="btn pri" id="uploadBtn" onclick="openWizard()">+ Upload contract</button>
+        <button class="btn pri" id="uploadBtn" onclick="openWizard()"><span style="font-size:15px;line-height:0;position:relative;top:1px">+</span> Upload Contract</button>
       </div>
       <div class="toolbar">
         <button class="chip on" data-f="all" onclick="setFilter('all',this)">All</button>
         <button class="chip" data-f="active" onclick="setFilter('active',this)">Active</button>
         <button class="chip" data-f="draft" onclick="setFilter('draft',this)">Draft in progress</button>
         <div class="sp"></div>
-        <div class="search"><span class="mag">⌕</span><input type="text" id="q" placeholder="Search country or document…" oninput="PAGE=1;render()"></div>
+        <div class="search"><span class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.6"/><path d="M16.1 16.1 21 21"/></svg></span><input type="text" id="q" placeholder="Search country…" oninput="PAGE=1;render()"></div>
       </div>
       <div id="tableSlot"></div>
     </div>
+
+    </div>
+    </div>
+   </div>
   </main>
 </div>
 
@@ -477,7 +540,8 @@ function render(){
   const rows=ROWS.filter(r=>{
     if(!r.versions.length) return false;
     const cc=C(r.c); if(!cc.eligible) return false;
-    if(q && !(cc.n.toLowerCase().includes(q)||r.doc.toLowerCase().includes(q))) return false;
+    /* Country name only — every search field in the admin portal searches a single field. */
+    if(q && !cc.n.toLowerCase().includes(q)) return false;
     if(FILTER==='draft') return !!byStatus(r,'draft');
     if(FILTER!=='all') return dstatus(r)===FILTER;
     return true;
@@ -509,7 +573,7 @@ function render(){
   if(!rows.length){
     document.getElementById('tableSlot').innerHTML=
       `<div class="emptystate"><div class="big">⊘</div><h3>No contracts match</h3>
-       <p>Try a different search term or clear the status filter.</p></div>`;
+       <p>Search matches country names. Try another country, or clear the status filter.</p></div>`;
     return;
   }
   const tr=r=>{
@@ -517,7 +581,7 @@ function render(){
     const drft = ds!=='draft' && byStatus(r,'draft');
     return `<tr data-c="${r.c}" onclick="openRow('${r.c}')">
       <td><div class="cty"><span class="fl">${cc.f}</span>${cc.n}</div></td>
-      <td><div class="doc"><span><span class="nm">${esc(r.doc)}</span></span></div></td>
+      <td class="doccell"><div class="doc"><span class="docname" title="${esc(r.doc)}"><span class="nm">${esc(r.doc)}</span></span></div></td>
       <td class="mono">V${vv.n}${drft?`<div class="vsub">V${drft.n} draft</div>`:''}</td>
       <td><span class="pill ${pc}">${pl}</span></td>
       <td class="mono">${fmt(effectiveFrom(r))}</td>
@@ -543,12 +607,11 @@ function render(){
       <th>Actions</th>
     </tr></thead><tbody>${pageRows.map(tr).join('')}</tbody></table>
     ${pages>1?`<div class="pager">
-      <span class="pinfo">${from+1}–${from+pageRows.length} of ${total}</span>
       <div class="pbtns">
-        <button class="pbtn" ${PAGE===1?'disabled':''} onclick="goPage(${PAGE-1})">‹</button>
+        <button class="pbtn arw" ${PAGE===1?'disabled':''} onclick="goPage(${PAGE-1})" aria-label="Previous page">‹</button>
         ${Array.from({length:pages},(_,i)=>i+1).map(n=>
           `<button class="pbtn ${n===PAGE?'on':''}" onclick="goPage(${n})">${n}</button>`).join('')}
-        <button class="pbtn" ${PAGE===pages?'disabled':''} onclick="goPage(${PAGE+1})">›</button>
+        <button class="pbtn arw" ${PAGE===pages?'disabled':''} onclick="goPage(${PAGE+1})" aria-label="Next page">›</button>
       </div></div>`:''}`;
 }
 
@@ -666,14 +729,24 @@ function history_(c){
    version into a new one. In every case, publishing goes out as the next version number
    and the previous version serves uninterrupted until that instant. */
 let W=null;
+/* Rebuild the file card from a stored version. Size and page count are saved alongside
+   the name, so a resumed draft shows the file the admin actually attached — not a stand-in. */
+function fileFrom(base){
+  if(!base||!base.file) return null;
+  return {name:base.file, size:base.fsize!==undefined?base.fsize:1.9,
+          pages:base.fpages!==undefined?base.fpages:16, hash:base.hash};
+}
 function openWizard(prefill){
   const r=prefill?rowFor(prefill):null;
   const drft=r?byStatus(r,'draft'):null;
   const base=drft || (r?byStatus(r,'active'):null);  // resume the draft if one exists, else fork the live version
   W={step:1,c:prefill||null,locked:!!prefill,
      doc:r?r.doc:'Independent Contractor Agreement',
-     file:base&&base.file?{name:base.file,size:1.9,pages:16,hash:base.hash}:null,
-     note:'', attest:false,
+     file:fileFrom(base),
+     note:drft?(drft.note||''):'',
+     /* The attestation is restored only when resuming a draft. Forking a live version is a
+        new legal act, so it has to be confirmed again. */
+     attest:drft?!!drft.attest:false,
      forking:!!(r&&byStatus(r,'active')&&!drft), existingDraft:!!drft, fileErr:null};
   drawWizard();
 }
@@ -750,7 +823,7 @@ function step2(){
           <div class="fn">${esc(f.name)}</div>
           <div class="fm">${f.size} MB · ${f.pages} pages</div>
         </div>
-        <button class="rm" onclick="W.file=null;drawWizard()" title="Remove file" aria-label="Remove file">
+        <button class="rm" onclick="W.file=null;W.attest=false;drawWizard()" title="Remove file" aria-label="Remove file">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
                stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/>
             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -779,15 +852,17 @@ function step2(){
   </div>
 
   <div class="f">
-    <label>Change Note</label>
+    <label>Change Note <span class="opt">(Internal Only)</span></label>
     <textarea maxlength="300" placeholder="${nv>1?'What changed in this version, and why?':'Summarise what this document covers.'}"
       oninput="W.note=this.value;refreshCount(this,300)">${esc(W.note)}</textarea>
     <div class="cnt">${W.note.length}/300</div>
   </div>`;
 }
 
+/* Attaching a different document invalidates the legal attestation — it was made about
+   the file that was there, not this one. */
 function pickSample(i){
-  const s=SAMPLES[i]; W.fileErr=null;
+  const s=SAMPLES[i]; W.fileErr=null; W.attest=false;
   W.file={name:s.name,size:s.size,pages:Math.round(s.size*7)+4,hash:'sha256:'+(i*104729+7).toString(16).padStart(8,'0')+'…'};
   drawWizard();
 }
@@ -797,6 +872,7 @@ function realFile(el){
   if(!/\.pdf$/i.test(f.name)){W.fileErr=`<b>${esc(f.name)} isn't a PDF.</b> Only PDF is accepted.`;return drawWizard();}
   if(mb>20){W.fileErr=`<b>${esc(f.name)} is ${mb} MB.</b> The limit is 20 MB. Compress the PDF and try again.`;return drawWizard();}
   W.file={name:f.name,size:mb,pages:'—',hash:'sha256:'+Math.abs(f.size*31).toString(16).slice(0,8)+'…'};
+  W.attest=false;
   drawWizard();
 }
 function dropFile(e){e.preventDefault();e.currentTarget.classList.remove('drag');
@@ -829,7 +905,7 @@ function toggleCdrop(e){
   if(document.getElementById('cdrop'))return closeCdrop();
   const rect=e.currentTarget.getBoundingClientRect();
   const d=document.createElement('div'); d.id='cdrop'; d.className='cdrop';
-  d.innerHTML=`<div class="cdsearch"><span class="mag">\u2315</span>
+  d.innerHTML=`<div class="cdsearch"><span class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.6"/><path d="M16.1 16.1 21 21"/></svg></span>
       <input type="text" id="cq" placeholder="Search country\u2026" autocomplete="off"
              oninput="filterCdrop(this.value)" onkeydown="cdropKey(event)"></div>
     <div class="cdlist" id="cdlist">${cdropOptions('')}</div>`;
@@ -851,8 +927,9 @@ function pickCountry(c){
   // re-derive the whole wizard for the chosen country: resume its draft, or fork its live version
   W.c=c;
   W.doc  = r ? r.doc : 'Independent Contractor Agreement';
-  W.file = base && base.file ? {name:base.file,size:1.9,pages:16,hash:base.hash} : null;
+  W.file = fileFrom(base);
   W.note = drft ? (drft.note||'') : '';
+  W.attest = drft ? !!drft.attest : false;
   W.existingDraft = !!drft;
   W.forking = !!(r && byStatus(r,'active') && !drft);
   W.fileErr = null;
@@ -876,7 +953,9 @@ function commit(mode){
   let ver=byStatus(r,'draft');
   if(!ver){ver=v(nextVersion(r),'draft',null,0,W.note,ME,TODAY,null);r.versions.unshift(ver);}
   ver.note=W.note; ver.updated=TODAY;
-  if(W.file){ver.file=W.file.name;ver.hash=W.file.hash;}
+  /* Save everything the wizard held, so resuming restores the form rather than a blank one. */
+  ver.attest=!!W.attest;
+  if(W.file){ver.file=W.file.name;ver.hash=W.file.hash;ver.fsize=W.file.size;ver.fpages=W.file.pages;}
   if(mode==='draft'){ver.status='draft';return;}
   // publishing always increments: the previous active (if any) is superseded
   const av=byStatus(r,'active'); if(av) av.status='superseded';
@@ -904,7 +983,8 @@ function tryCloseWizard(){
 function dirty(){
   if(!W || !W.c) return false;
   const r=wRow(), d=r?byStatus(r,'draft'):null;
-  if(d) return W.doc!==r.doc || W.note!==(d.note||'') || (W.file&&W.file.name!==d.file);
+  if(d) return W.doc!==r.doc || W.note!==(d.note||'')
+             || W.attest!==!!d.attest || (W.file&&W.file.name!==d.file) || (!W.file&&!!d.file);
   return true;   // a new draft or a fork: anything at all is unsaved work
 }
 function deleteDraft(){
@@ -931,7 +1011,7 @@ function step3(){
       <div class="c"><div class="k">Effective From</div><div class="v">On publish</div></div>
       <div class="c"><div class="k">File</div><div class="v" style="font-size:12.6px">${esc(W.file.name)}</div></div>
     </div>
-    <div class="rr"><div class="c full"><div class="k">Change Note</div>
+    <div class="rr"><div class="c full"><div class="k">Change Note (Internal Only)</div>
       <div class="v" style="font-weight:400">${esc(W.note)||'—'}</div></div></div>
   </div>
   <div class="inl i-mute"><span class="i">🔒</span><span><b>This can't be undone.</b>
