@@ -254,8 +254,8 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
   border-radius:6px;padding:6px 10px;font-size:12.3px;margin-bottom:5px;color:var(--ink2)}
 .samples button:hover{border-color:var(--blue);color:var(--blue)}
 .samples button span{color:var(--ink3);font-size:11.3px}
-.filecard{border:1px solid var(--line);border-radius:9px;padding:12px 14px;display:flex;gap:12px;align-items:flex-start;background:#fff}
-.filecard .fic{width:32px;height:38px;border-radius:5px;background:var(--red-s);color:var(--red);display:grid;place-items:center;font-size:9.5px;font-weight:800;flex-shrink:0}
+.filecard{border:1px solid var(--line);border-radius:9px;padding:12px 14px;display:flex;gap:12px;align-items:center;background:#fff}
+.filecard .fic{width:34px;height:34px;border-radius:9px;background:var(--blue-s);color:var(--blue);display:grid;place-items:center;flex-shrink:0}
 .filecard .fn{font-weight:600;font-size:13.3px;word-break:break-all}
 .filecard .fm{font-size:11.7px;color:var(--ink3);margin-top:2px}
 .filecard .fh{font-size:10.8px;color:var(--ink3);font-family:var(--mono);margin-top:3px}
@@ -825,7 +825,9 @@ function step2(){
   <div class="f">
     <label>Contract Document</label>
     ${f?`<div class="filecard">
-        <div class="fic">PDF</div>
+        <div class="fic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+             ><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div>
         <div style="flex:1">
           <div class="fn">${esc(f.name)}</div>
           <div class="fm">${f.size} MB · ${f.pages} pages</div>
@@ -860,7 +862,7 @@ function step2(){
 
   <div class="f">
     <label>Change Note <span class="opt">(Internal Only)</span></label>
-    <textarea maxlength="300" placeholder="${nv>1?'What changed in this version, and why?':'Summarise what this document covers.'}"
+    <textarea maxlength="300" placeholder="${nv>1?'Describe what changed in this version':'Describe what this document covers'}"
       oninput="W.note=this.value;refreshCount(this,300)">${esc(W.note)}</textarea>
     <div class="cnt">${W.note.length}/300</div>
   </div>`;
@@ -1021,9 +1023,9 @@ function step3(){
     <div class="rr"><div class="c full"><div class="k">Change Note (Internal Only)</div>
       <div class="v" style="font-weight:400">${esc(W.note)||'—'}</div></div></div>
   </div>
-  <div class="inl i-mute"><span class="i">🔒</span><span><b>This can't be undone.</b>
-    ${prev?`V${prev.n} is replaced and stays in version history.`
-          :`Published versions can't be edited — only replaced by a later version.`}</span></div>
+  <div class="inl i-mute"><span class="i">🔒</span><span><b>${prev
+      ?`V${prev.n} is replaced and stays in version history.`
+      :`Published versions can't be edited — only replaced by a later version.`}</b></span></div>
   <div class="attest">
     <input type="checkbox" id="att" ${W.attest?'checked':''} onchange="W.attest=this.checked;refreshFoot()">
     <label for="att">I confirm this document was reviewed by legal for this jurisdiction.</label>
