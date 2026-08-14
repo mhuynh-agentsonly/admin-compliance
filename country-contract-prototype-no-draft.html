@@ -89,13 +89,22 @@ h1.page{font-size:26px;font-weight:800;margin:0 0 18px;letter-spacing:-.025em}
 .toolbar{display:flex;gap:8px;align-items:center;padding:0 18px 14px;flex-wrap:wrap}
 .toolbar .sp{flex:1}
 .search{position:relative;width:248px;min-width:170px}
-.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line2);border-radius:8px;
+.search input{width:100%;padding:9px 32px 9px 34px;border:1px solid var(--line2);border-radius:8px;
   font-size:13px;background:#fff;color:var(--ink)}
 .search input::placeholder{color:var(--ink3)}
 .search input:focus{outline:2px solid var(--blue-s);border-color:var(--blue)}
 .search .mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--grey);
   display:flex;pointer-events:none}
 .search .mag svg{width:15px;height:15px}
+/* Clear button. Only rendered when there is something to clear — an X over an empty field
+   is a control that does nothing, and it would crowd the placeholder. */
+.search .clr{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:none;
+  align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:0;
+  background:transparent;color:var(--ink3);border-radius:50%}
+.search.has .clr{display:flex}
+.search .clr:hover{background:var(--line);color:var(--ink)}
+.search .clr:focus-visible{outline:2px solid var(--blue);outline-offset:1px;color:var(--blue)}
+.search .clr svg{width:13px;height:13px}
 .chip{border:0;background:transparent;color:#566e82;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:600}
 .chip:hover{color:var(--ink2);background:#f5f7fa}
 .chip.on{background:var(--blue-s);color:var(--blue-on-s)}
@@ -365,8 +374,8 @@ button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allo
         <button class="btn pri" id="uploadBtn" onclick="openWizard()"><span style="font-size:15px;line-height:0;position:relative;top:1px">+</span> Upload Contract</button>
       </div>
       <div class="toolbar">
+        <div class="search" id="searchWrap"><span class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.6"/><path d="M16.1 16.1 21 21"/></svg></span><input type="text" id="q" placeholder="Search country…" autocomplete="off" oninput="onSearch()" onkeydown="if(event.key==='Escape'&&this.value){event.stopPropagation();clearSearch()}"><button class="clr" type="button" aria-label="Clear search" onclick="clearSearch()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5 19 19M19 5 5 19"/></svg></button></div>
         <div class="sp"></div>
-        <div class="search"><span class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.6"/><path d="M16.1 16.1 21 21"/></svg></span><input type="text" id="q" placeholder="Search country…" oninput="PAGE=1;render()"></div>
       </div>
       <div id="tableSlot"></div>
     </div>
@@ -518,6 +527,19 @@ function sortIcon(key){
   const on=SORT.key===key;
   return `<span class="sorticon"><i class="up${on&&SORT.dir==='asc'?'':' off'}"></i><i class="dn${on&&SORT.dir==='desc'?'':' off'}"></i></span>`;
 }
+/* The clear button's visibility is driven off the field's value, so it stays correct
+   whether the text was typed or cleared programmatically. */
+function syncClear(){
+  const i=document.getElementById('q');
+  document.getElementById('searchWrap').classList.toggle('has',!!i.value);
+}
+function onSearch(){PAGE=1;syncClear();render();}
+function clearSearch(){
+  const i=document.getElementById('q');
+  i.value=''; PAGE=1; syncClear(); render();
+  i.focus();   // clearing is a step in searching, not the end of it — keep the cursor here
+}
+
 function render(){
   const q=(document.getElementById('q').value||'').toLowerCase();
   // The table lists CONTRACTS. A country with no document has no row; ineligible countries never appear.
@@ -554,8 +576,8 @@ function render(){
 
   if(!rows.length){
     document.getElementById('tableSlot').innerHTML=
-      `<div class="emptystate"><div class="big">⊘</div><h3>No contracts match</h3>
-       <p>Search matches country names. Try another country, or clear the search.</p></div>`;
+      `<div class="emptystate"><div class="big">⊘</div><h3>No countries match</h3>
+       <p>Check the spelling, or try searching another country name.</p></div>`;
     return;
   }
   const tr=r=>{
@@ -621,7 +643,7 @@ function viewContract(c){
   const cc=C(c), r=rowFor(c), av=byStatus(r,'active');
   scrim(`<div class="modal">
     <div class="mhead">
-      <h3>${cc.f} ${cc.n} <span class="pill p-active">Active</span></h3>
+      <h3>${cc.f} ${cc.n}</h3>
       <p>This contract is live. Published versions can't be changed — upload a new version to replace it.</p>
       <button class="x" onclick="closeScrim()">✕</button>
     </div>
@@ -711,9 +733,9 @@ function drawWizard(){
     </div>
     <div class="mbody">${s===1?step1():s===2?step2():step3()}</div>
     <div class="mfoot">
+      <div class="sp"></div>
       ${s>1?`<button class="btn" onclick="W.step--;drawWizard()">Back</button>`
            :`<button class="btn" onclick="tryCloseWizard()">Cancel</button>`}
-      <div class="sp"></div>
       ${s<3?`<button class="btn pri" ${canContinue()?'':'disabled'} onclick="W.step++;drawWizard()">Continue</button>`
            :`<button class="btn pri" ${canContinue()?'':'disabled'} onclick="doPublish()">Publish contract</button>`}
     </div>
@@ -963,6 +985,7 @@ function toast(msg,kind){
   setTimeout(()=>t.remove(),4200);
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeScrim();});
+syncClear();
 render();
 </script>
 </body>
