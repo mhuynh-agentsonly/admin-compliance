@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Country-Level Contract — Prototype v3 (no draft)</title>
+<!-- DM Sans, used from a local install. No webfont request, so the file stays self-contained. -->
+<style>
+:root{
+  /* Admin-portal shell tokens, matched to the Country Admin design */
+  --ink:#17263f; --ink2:#46586e; --ink3:#6b7280;   /* ink3 = 4.8:1 on white */
+  --line:#eef1f5; --line2:#dde1e8; --line3:#e8ebf0;
+  --bg:#f6f7fb; --panel:#fff; --hover:#f5f8fe;
+  --blue:#2f6fed; --blue-d:#2159cf; --blue-s:#eaf1fe;
+  --blue-on-s:#2159cf;   /* blue text ON blue-s: #2f6fed is 4.0:1 there, this is 5.4:1 */
+  --dot-active:#05ac87; --navicon:#3d7fd6; --tabbg:#e9f5fa; --tabink:#566e82;   /* 4.8:1 on the tab band */
+  --grey:#7b8797;                                    /* icons only — 3.6:1, UI-component floor is 3:1 */
+  --thbg:#f9fafc; --brand:#12b76a;
+  --green:#0a7048; --green-s:#e6f7ef;              /* 5.5:1 — the mock's green is 2.8:1 */
+  --amber:#b45309; --amber-s:#fffbeb;
+  --red:#dc2626; --red-s:#fef2f2;
+  --slate-s:#f1f3f5;
+  --sh:0 1px 2px rgba(16,24,40,.05);
+  --sh-lg:0 12px 40px rgba(16,24,40,.14),0 2px 6px rgba(16,24,40,.06);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.5 "DM Sans",Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;color:var(--ink)}
+
+
+.app{display:grid;grid-template-columns:210px minmax(0,1fr);min-height:100vh}
+.side{background:var(--panel);padding:20px 12px 14px;display:flex;flex-direction:column}
+.brandrow{display:flex;align-items:center;gap:9px;padding:0 8px 14px}
+.brandmark{width:19px;height:19px;display:grid;grid-template-columns:repeat(3,1fr);gap:2.5px;flex-shrink:0}
+.brandmark i{display:block;border-radius:50%;background:var(--brand)}
+.brandrow span{font-size:12px;font-weight:700;color:var(--ink);line-height:1.12;letter-spacing:-.01em}
+.portal{padding:0 8px 8px;font-size:19px;font-weight:800;letter-spacing:-.02em}
+.envchip{margin:0 8px 16px;display:inline-block;background:var(--blue-s);color:var(--blue);
+  font-size:11px;font-weight:600;padding:3px 9px;border-radius:6px;width:fit-content}
+.navlist{display:flex;flex-direction:column;gap:2px}
+.navgap{flex:1;min-height:14px}
+.nav{position:relative;display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:7px;
+  color:#33475b;font-size:13.4px;font-weight:500;flex-shrink:0}
+.nav svg{width:19px;height:19px;flex-shrink:0;color:var(--navicon)}
+.nav:hover{background:#f7f9fc}
+.nav.on{background:#eff4fb;color:var(--ink);font-weight:600}
+/* the design marks the active item on its trailing edge, not with a coloured label */
+.nav.on::after{content:'';position:absolute;right:-12px;top:0;bottom:0;width:3px;
+  background:var(--blue);border-radius:3px 0 0 3px}
+.navfoot{border-top:1px solid var(--line);margin:8px -4px 0;padding-top:10px}
+.build{padding:12px 10px 0;font-size:10.5px;color:var(--ink3)}
+
+.main{position:relative;padding:26px 30px 70px}
+.main::before{content:'';position:absolute;top:0;right:0;width:460px;height:215px;pointer-events:none;
+  background-image:radial-gradient(circle,#dbe0f0 1.05px,transparent 1.05px);background-size:15px 15px;
+  -webkit-mask-image:linear-gradient(to bottom left,#000,transparent 62%);
+          mask-image:linear-gradient(to bottom left,#000,transparent 62%)}
+.mainin{position:relative;z-index:1}
+h1.page{font-size:26px;font-weight:800;margin:0 0 18px;letter-spacing:-.025em}
+
+/* the tabs live on a tinted band across the top of the page panel */
+.panel{background:var(--panel);border-radius:16px;padding-bottom:24px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.tabs{display:flex;gap:30px;padding:0 26px;background:var(--tabbg);border-radius:16px 16px 0 0;overflow-x:auto}
+.tabs a{font-size:13.6px;font-weight:600;color:var(--tabink);padding:19px 0 15px;
+  border-bottom:3px solid transparent;text-decoration:none;white-space:nowrap}
+.tabs a:hover{color:var(--ink2)}
+.tabs a.on{color:var(--ink);border-bottom-color:var(--blue)}
+.panelin{padding:24px 24px 0}
+
+.card{background:var(--panel);border:1px solid var(--line3);border-radius:12px;overflow:hidden}
+.chead{padding:18px 20px 16px;display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.chead h2{font-size:17px;font-weight:700;margin:0 0 3px;letter-spacing:-.015em}
+.chead p{margin:0;font-size:13px;color:var(--ink3)}
+.chead .sp{flex:1}
+.btn{border-radius:8px;padding:9px 15px;font-size:13px;border:1px solid var(--line2);background:#fff;color:var(--ink2);font-weight:600}
+.btn:hover{background:var(--hover)}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.pri:hover{background:var(--blue-d)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sec{color:var(--blue);border-color:var(--blue);background:#fff}
+.btn.sec:hover{background:var(--blue-s)}
+.btn.dngr{color:var(--red);border-color:#fca5a5}
+.btn.dngr:hover{background:var(--red-s)}
+
+.toolbar{display:flex;gap:8px;align-items:center;padding:0 18px 14px;flex-wrap:wrap}
+.toolbar .sp{flex:1}
+.search{position:relative;width:248px;min-width:170px}
+.search input{width:100%;padding:9px 12px 9px 34px;border:1px solid var(--line2);border-radius:8px;
+  font-size:13px;background:#fff;color:var(--ink)}
+.search input::placeholder{color:var(--ink3)}
+.search input:focus{outline:2px solid var(--blue-s);border-color:var(--blue)}
+.search .mag{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--grey);
+  display:flex;pointer-events:none}
+.search .mag svg{width:15px;height:15px}
+.chip{border:0;background:transparent;color:#566e82;border-radius:7px;padding:6px 12px;font-size:13px;font-weight:600}
+.chip:hover{color:var(--ink2);background:#f5f7fa}
+.chip.on{background:var(--blue-s);color:var(--blue-on-s)}
+
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th{text-align:left;font-size:12px;font-weight:600;color:var(--ink3);
+  padding:10px 12px;background:var(--thbg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  white-space:nowrap}
+th.sortable{cursor:pointer;user-select:none}
+th.sortable:hover{color:var(--ink)}
+.thsort{display:inline-flex;align-items:center;gap:6px}
+.sorticon{display:inline-flex;flex-direction:column;gap:2px}
+.sorticon i{display:block;width:0;height:0;border-left:3.5px solid transparent;border-right:3.5px solid transparent}
+.sorticon i.up{border-bottom:4px solid currentColor}
+.sorticon i.dn{border-top:4px solid currentColor}
+.sorticon i.off{opacity:.3}
+td{padding:7px 12px;border-bottom:1px solid var(--line);font-size:13.4px;vertical-align:middle}
+/* Percentages, not pixels: every column grows with the table instead of the document-name
+   column swallowing all the slack and leaving a void before Version on a wide screen.
+   Contract is the only auto column, so it still takes the remainder — just more slowly. */
+th:nth-child(1){width:16%}    /* Country        */
+th:nth-child(3){width:10%}    /* Version        */
+th:nth-child(4){width:16%}    /* Effective From */
+th:nth-child(5){width:14.5%}  /* Last Update    */
+th:nth-child(6){width:8%}     /* Actions        */
+th:last-child,td.act{padding-left:4px;padding-right:6px}
+tbody tr{cursor:pointer;height:44px}
+tbody tr:hover{background:var(--blue-s)}
+/* the row you just acted on announces itself, so the order can stay stable */
+tbody tr.flash{animation:flashrow 2.6s ease-out}
+@keyframes flashrow{
+  0%,45%{background:var(--blue-s);box-shadow:inset 3px 0 0 var(--blue)}
+  100%{background:transparent;box-shadow:inset 3px 0 0 transparent}}
+tr:last-child td{border-bottom:0}
+.cty{display:flex;align-items:center;gap:10px;font-weight:600}
+.cty .fl{font-size:16px;line-height:1}
+.doc{display:flex;gap:8px;align-items:flex-start;min-width:0}
+.docname{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+td.doccell .nm{font-size:13.2px}
+.mutedline{font-size:11.3px;color:var(--ink3);margin-top:1px}
+td.mono{line-height:1.3}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.p-active{background:var(--green-s);color:var(--green)}
+.p-super{background:var(--slate-s);color:var(--ink2)}
+.mono{font-variant-numeric:tabular-nums;color:var(--ink)}
+td.act{text-align:center;width:62px}
+th:last-child{text-align:left}
+td.act{position:relative}
+.menu{position:fixed;z-index:140;background:#fff;border:1px solid var(--line);
+  border-radius:9px;box-shadow:var(--sh-lg);padding:5px;min-width:212px;text-align:left}
+.menu button{display:block;width:100%;text-align:left;border:0;background:transparent;padding:7px 11px;
+  border-radius:6px;font-size:13px;color:var(--ink2)}
+.menu button:hover{background:var(--hover);color:var(--ink)}
+.menu button.dz{color:var(--red)}
+.menu .sep{height:1px;background:var(--line);margin:5px 0}
+.kebab{border:0;background:transparent;color:var(--ink3);font-size:16px;padding:2px 7px;border-radius:5px;line-height:1}
+.kebab:hover{background:var(--line);color:var(--ink)}
+.pager{display:flex;align-items:center;gap:12px;padding:14px 16px;flex-wrap:wrap}
+.pinfo{font-size:12.5px;color:var(--ink3)}
+.pbtns{margin-left:auto;display:flex;gap:6px;align-items:center}
+/* page numbers are borderless; only the arrows and the current page carry a shape */
+.pbtn{min-width:32px;height:32px;padding:0 8px;border:0;background:transparent;
+  border-radius:8px;font-size:13px;font-weight:600;color:var(--ink2)}
+.pbtn:hover:not(:disabled){background:#f2f5f9}
+.pbtn.on{background:var(--blue-s);color:var(--blue-on-s)}
+.pbtn.arw{border:1px solid var(--line2);color:var(--ink2);font-weight:400;font-size:15px}
+.pbtn:disabled{opacity:.4;cursor:not-allowed}
+.emptystate{padding:56px 24px;text-align:center}
+.emptystate .big{font-size:26px;margin-bottom:10px;opacity:.4}
+.emptystate h3{margin:0 0 5px;font-size:15px}
+.emptystate p{margin:0 auto;font-size:13.2px;color:var(--ink3);max-width:44ch}
+
+.scrim{position:fixed;inset:0;background:rgba(17,24,39,.45);z-index:100;display:grid;place-items:center;padding:24px}
+.modal{background:#fff;border-radius:12px;box-shadow:var(--sh-lg);width:min(600px,100%);max-height:90vh;
+  display:flex;flex-direction:column;overflow:hidden}
+.mhead{padding:20px 24px 0;position:relative}
+.mhead h3{margin:0 0 3px;font-size:16.5px;letter-spacing:-.01em;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.mhead p{margin:0;font-size:13.5px;color:var(--ink2);line-height:1.5}
+.x{position:absolute;right:16px;top:16px;border:0;background:transparent;color:var(--ink3);font-size:17px;line-height:1;padding:4px 7px;border-radius:6px}
+.x:hover{background:var(--hover);color:var(--ink)}
+.steps{display:flex;align-items:center;gap:8px;padding:18px 24px 4px}
+.stp{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink3)}
+.stp .n{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);display:grid;place-items:center;font-size:10.5px;font-weight:700;flex-shrink:0}
+.stp.on{color:var(--blue);font-weight:600}
+.stp.on .n,.stp.done .n{border-color:var(--blue);background:var(--blue);color:#fff}
+.stp.done{color:var(--blue)}
+.stpline{flex:1;height:1px;background:var(--line2);min-width:14px}
+.mbody{padding:18px 24px 22px;overflow:auto}
+.mfoot{padding:6px 24px 18px;display:flex;gap:8px;align-items:center;background:#fff;flex-wrap:wrap}
+.mfoot .sp{flex:1}
+.foothelp{font-size:11.8px;color:var(--ink2);line-height:1.4;flex:1;min-width:0}
+.foothelp strong{color:var(--ink);font-weight:600}
+
+.attest{display:flex;gap:11px;align-items:flex-start;margin-top:16px}
+.attest input{margin-top:2px;width:15px;height:15px;accent-color:var(--blue);flex-shrink:0}
+.attest label{font-size:13.2px;font-weight:500;cursor:pointer}
+.info{position:relative;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
+  border-radius:50%;border:1px solid var(--line2);color:var(--ink3);font-size:9.5px;font-weight:700;
+  margin-left:6px;cursor:help;vertical-align:1px}
+.info:hover,.info:focus{border-color:var(--blue);color:var(--blue);outline:none}
+.tip{position:absolute;left:-9px;top:calc(100% + 9px);width:262px;background:var(--ink);color:#fff;
+  font-size:12px;font-weight:400;line-height:1.45;padding:8px 11px;border-radius:7px;box-shadow:var(--sh-lg);
+  opacity:0;visibility:hidden;transition:.12s;z-index:150;text-align:left;pointer-events:none}
+.info:hover .tip,.info:focus .tip{opacity:1;visibility:visible}
+.tip::before{content:'';position:absolute;bottom:100%;left:13px;border:5px solid transparent;border-bottom-color:var(--ink)}
+.f{margin-bottom:15px}
+.f label{display:block;font-size:12.5px;font-weight:600;margin-bottom:5px}
+.f label .opt{font-weight:400;color:var(--ink3)}
+.f .help{font-size:11.8px;color:var(--ink3);margin-top:5px}
+.f input[type=text],.f textarea,.f select{width:100%;padding:8px 11px;border:1px solid var(--line2);border-radius:7px;font-size:13.3px;background:#fff}
+.f input:focus,.f textarea:focus,.f select:focus{outline:2px solid var(--blue-s);border-color:var(--blue)}
+.f textarea{min-height:62px;resize:vertical}
+.cnt{text-align:right;font-size:11.3px;color:var(--ink3);margin-top:4px}
+
+.csel{position:relative}
+.cselbtn{width:100%;text-align:left;padding:8px 11px;border:1px solid var(--line2);border-radius:7px;background:#fff;
+  font-size:13.3px;display:flex;align-items:center;gap:8px;color:var(--ink3)}
+.cselbtn.has{color:var(--ink)}
+.cselbtn:disabled{cursor:not-allowed;background:var(--hover);color:var(--ink3)}
+.cselbtn:disabled .fl{opacity:.6}
+button:disabled,input:disabled,select:disabled,textarea:disabled{cursor:not-allowed}
+.cselbtn .car{margin-left:auto;color:var(--ink3);font-size:10px}
+/* fixed-positioned so it escapes the modal body's overflow clipping */
+.cdrop{position:fixed;z-index:130;background:#fff;border:1px solid var(--line);border-radius:9px;
+  box-shadow:var(--sh-lg);display:flex;flex-direction:column;overflow:hidden}
+.cdsearch{position:relative;padding:8px;border-bottom:1px solid var(--line);flex-shrink:0}
+.cdsearch input{width:100%;padding:7px 10px 7px 30px;border:1px solid var(--line2);border-radius:6px;
+  font-size:13px;background:#fff}
+.cdsearch input:focus{outline:2px solid var(--blue-s);border-color:var(--blue)}
+.cdsearch .mag svg{width:15px;height:15px}
+.cdsearch .mag{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--grey);display:flex;pointer-events:none;
+  font-size:12px;pointer-events:none}
+.cdlist{overflow:auto;padding:5px;flex:1}
+.cnone{padding:16px 12px;font-size:12.8px;color:var(--ink3);text-align:center}
+.copt{display:flex;align-items:center;gap:9px;width:100%;border:0;background:transparent;text-align:left;
+  padding:7px 10px;border-radius:6px;font-size:13.2px;color:var(--ink)}
+.copt:hover{background:var(--hover)}
+.copt .hintx{margin-left:auto;font-size:11.3px;color:var(--ink3);font-weight:500}
+
+.dz{border:1px solid var(--line);border-radius:10px;padding:22px 18px;text-align:center;background:#fff;transition:.12s}
+.dz:hover{border-color:var(--line2);background:var(--hover)}
+.dz.drag{border-color:var(--blue);background:var(--blue-s)}
+.dz .up{width:38px;height:38px;border-radius:50%;background:var(--hover);color:var(--ink2);
+  display:inline-flex;align-items:center;justify-content:center;margin-bottom:11px}
+.dz.drag .up{background:#fff;color:var(--blue)}
+.dz .t{font-size:13.5px;color:var(--ink2);margin-bottom:3px}
+.dz .s{font-size:11.8px;color:var(--ink3)}
+.dz .browse{color:var(--blue);font-weight:600;cursor:pointer}
+.dz .browse:hover{text-decoration:underline}
+.samples{margin-top:13px;padding-top:12px;border-top:1px dashed var(--line2)}
+.samples .lbl{font-size:11.3px;font-weight:600;color:var(--ink3);margin-bottom:7px}
+.samples button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:6px;padding:6px 10px;font-size:12.3px;margin-bottom:5px;color:var(--ink2)}
+.samples button:hover{border-color:var(--blue);color:var(--blue)}
+.samples button span{color:var(--ink3);font-size:11.3px}
+.filecard{border:1px solid var(--line);border-radius:9px;padding:12px 14px;display:flex;gap:12px;align-items:center;background:#fff}
+.filecard .fic{width:34px;height:34px;border-radius:9px;background:var(--blue-s);color:var(--blue);display:grid;place-items:center;flex-shrink:0}
+.filecard .fn{font-weight:600;font-size:13.3px;word-break:break-all}
+.filecard .fm{font-size:11.7px;color:var(--ink3);margin-top:2px}
+.filecard .fh{font-size:10.8px;color:var(--ink3);font-family:var(--mono);margin-top:3px}
+.filecard .rm{margin-left:auto;border:0;background:transparent;color:var(--ink3);padding:5px;border-radius:6px;
+  display:inline-flex;align-items:center;justify-content:center}
+.filecard .rm:hover{background:var(--red-s);color:var(--red)}
+.vchip{display:inline-flex;align-items:center;gap:7px;background:var(--blue-s);color:var(--blue);border-radius:6px;padding:5px 11px;font-size:12.5px;font-weight:600}
+
+.inl{border-radius:8px;padding:10px 13px;font-size:12.6px;margin-top:11px;display:flex;gap:9px;align-items:flex-start;border:1px solid}
+.inl .i{flex-shrink:0;font-weight:700}
+.inl b{display:block;margin-bottom:2px}
+.inl strong{font-weight:700}
+.i-warn{background:var(--amber-s);color:var(--amber);border-color:#fde68a}
+.i-err{background:var(--red-s);color:var(--red);border-color:#fecaca}
+.i-info{background:var(--blue-s);color:var(--blue-d);border-color:#bfdbfe}
+.i-mute{background:var(--hover);color:var(--ink2);border-color:var(--line)}
+.inl select{margin-top:7px;width:100%;padding:6px 9px;border:1px solid currentColor;border-radius:6px;font-size:12.3px;background:#fff;color:var(--ink)}
+
+.review{border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.review .rr{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.review .rr:last-child{border-bottom:0}
+.review .c{padding:11px 14px}
+.review .c:first-child{border-right:1px solid var(--line)}
+.review .c.full{grid-column:1/-1;border-right:0}
+.review .k{font-size:11.5px;color:var(--ink3);margin-bottom:3px}
+.review .v{font-size:13.2px;font-weight:500;word-break:break-word}
+.filelink{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;padding:0;
+  font:inherit;font-weight:500;color:var(--blue);cursor:pointer;text-align:left;word-break:break-all}
+.filelink:hover{text-decoration:underline}
+.linkbtn{border:0;background:transparent;padding:0;font:inherit;font-size:13.2px;font-weight:600;
+  color:var(--blue);cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.linkbtn:hover{text-decoration:underline}
+.linkbtn svg{transition:transform .15s}
+.linkbtn.open svg{transform:rotate(180deg)}
+.filelink .fi{font-size:11px;opacity:.7}
+
+.expando{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+/* Timeline axis: the 12px dot and the 2px connector share one centre line at x=6.
+   Each entry draws its own connector down to the next dot, so the spine starts at the
+   first dot and stops at the last instead of overshooting both. */
+.tl{position:relative;padding-left:24px}
+.tlv{position:relative;margin-bottom:18px}
+/* box-sizing:border-box from the * rule does NOT reach pseudo-elements — set it here or the
+   2px border makes the dot 18px wide and its centre no longer lands on the connector. */
+.tlv::before{content:'';position:absolute;box-sizing:border-box;left:-24px;top:4.6px;
+  width:14px;height:14px;z-index:1;border-radius:50%;background:#fff;border:2px solid var(--line2)}
+.tlv::after{content:'';position:absolute;left:-18px;top:18.6px;bottom:-22.6px;width:2px;background:var(--line)}
+.tlv:last-child::after{display:none}
+.tlv.cur::before{border-color:var(--dot-active);background:var(--dot-active)}
+.tlv .vh{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.tlv .vn{font-weight:700;font-size:13.5px}
+.tlv .vm{font-size:12.2px;color:var(--ink3);margin-bottom:6px}
+.tlv .vnote{font-size:12.6px;color:var(--ink2);background:#f9fafb;border-radius:6px;padding:8px 10px;margin-bottom:7px}
+.tlv .vacts button{font-size:11.8px;padding:4px 9px;border:1px solid var(--line2);background:#fff;border-radius:6px;color:var(--ink2);margin-right:6px}
+.tlv .vacts button:hover{background:var(--hover)}
+
+.toasts{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center}
+.toast{background:#111827;color:#fff;border-radius:9px;padding:10px 16px;font-size:13px;box-shadow:var(--sh-lg);display:flex;gap:10px;align-items:center;animation:tin .22s ease}
+.toast.good .d{color:#34d399}
+.toast .d{font-weight:700}
+@keyframes tin{from{opacity:0;transform:translateY(9px)}}
+
+@media(max-width:820px){
+  .app{grid-template-columns:1fr}.side{display:none}
+  .review .rr{grid-template-columns:1fr}.review .c:first-child{border-right:0;border-bottom:1px solid var(--line)}
+  th,td{padding:9px 12px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="side">
+    <div class="brandrow"><div class="brandmark"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>Agents<br>Only</span></div>
+    <div class="portal">Admin Portal</div>
+    <div class="envchip">Development</div>
+    <div class="navlist">
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.6 20c0-3.6 2.8-5.6 6.4-5.6s6.4 2 6.4 5.6"/><path d="M16.4 5.7a3.2 3.2 0 0 1 0 6.2"/><path d="M18.1 14.9c2 .6 3.3 2.2 3.3 5.1"/></svg>Agents</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13.5h6M9 17h4"/></svg>Projects</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 3.2 7.6 12 12l8.8-4.4z"/><path d="M3.2 12.4 12 16.8l8.8-4.4"/><path d="M3.2 16.9 12 21.3l8.8-4.4"/></svg>Training</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.6 12 4.2l9 5.4"/><path d="M5.6 10.4v8.4M9.9 10.4v8.4M14.1 10.4v8.4M18.4 10.4v8.4"/><path d="M3.4 20.2h17.2"/></svg>Wallet</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.4v9.8"/><path d="M8.2 9.7 12 13.5l3.8-3.8"/><path d="M4.2 16.2V19a2 2 0 0 0 2 2h11.6a2 2 0 0 0 2-2v-2.8"/></svg>Deposits</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.6 20c0-3.6 2.8-5.6 6.4-5.6 1.3 0 2.5.3 3.5.8"/><path d="M16.2 6.4h5.2v5.2"/><path d="M21.4 6.4 15.6 12.2"/></svg>Referrals</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="3.4" width="17.2" height="17.2" rx="4.6"/><circle cx="9.2" cy="9.2" r="1.15"/><circle cx="14.8" cy="14.8" r="1.15"/><path d="M15.6 8.4 8.4 15.6"/></svg>Platform Rates</div>
+    <div class="nav on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="M3.4 12h17.2"/><path d="M12 3.4c2.4 2.3 3.7 5.3 3.7 8.6S14.4 18.3 12 20.6c-2.4-2.3-3.7-5.3-3.7-8.6S9.6 5.7 12 3.4z"/></svg>Country Admin</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.4 12S6 5.6 12 5.6 21.6 12 21.6 12 18 18.4 12 18.4 2.4 12 2.4 12z"/><circle cx="12" cy="12" r="3"/></svg>View as User</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 3.4l1.7 4.2 4.2 1.7-4.2 1.7L11 15.2 9.3 11 5.1 9.3 9.3 7.6z"/><path d="M18.2 15.6l.75 1.85 1.85.75-1.85.75-.75 1.85-.75-1.85-1.85-.75 1.85-.75z"/></svg>AI Assistants</div>
+    <div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 19 6v5.4c0 4.3-2.9 7.9-7 9.3-4.1-1.4-7-5-7-9.3V6z"/><circle cx="12" cy="10.3" r="2.1"/><path d="M8.5 16.5c.6-1.6 1.9-2.4 3.5-2.4s2.9.8 3.5 2.4"/></svg>Admin Users</div>
+    </div>
+    <div class="navgap"></div>
+    <div class="navfoot"><div class="nav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.6 4h3.2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3.2"/><path d="M9.6 8.4 6 12l3.6 3.6"/><path d="M6.2 12h8.6"/></svg>Logout</div></div>
+    <div class="build">ao-admin-portal: v0.0.74</div>
+  </aside>
+
+  <main class="main">
+   <div class="mainin">
+    <h1 class="page">Country Admin</h1>
+    <div class="panel">
+    <div class="tabs">
+      <a href="#">Background Checks</a><a href="#">Onboarding</a>
+      <a href="#" class="on">Legal Contracts</a><a href="#">Tax Details</a><a href="#">System Requirements</a>
+    </div>
+    <div class="panelin">
+
+    <div class="card">
+      <div class="chead">
+        <div><h2>Legal Contracts</h2>
+          <p>Upload the agreement each agent signs during onboarding, per country.</p></div>
+        <div class="sp"></div>
+        <button class="btn pri" id="uploadBtn" onclick="openWizard()"><span style="font-size:15px;line-height:0;position:relative;top:1px">+</span> Upload Contract</button>
+      </div>
+      <div class="toolbar">
+        <div class="sp"></div>
+        <div class="search"><span class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.6"/><path d="M16.1 16.1 21 21"/></svg></span><input type="text" id="q" placeholder="Search country…" oninput="PAGE=1;render()"></div>
+      </div>
+      <div id="tableSlot"></div>
+    </div>
+
+    </div>
+    </div>
+   </div>
+  </main>
+</div>
+
+<div id="overlay"></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+/* =================== DATA =================== */
+const TODAY='2026-08-07', ME='Mai Huynh';
+const COUNTRIES=[
+  {c:'CL',f:'🇨🇱',n:'Chile', eligible:true},
+  {c:'PT',f:'🇵🇹',n:'Portugal', eligible:true},
+  {c:'AR',f:'🇦🇷',n:'Argentina', eligible:true},
+  {c:'MY',f:'🇲🇾',n:'Malaysia', eligible:true},
+  {c:'KR',f:'🇰🇷',n:'South Korea', eligible:true},
+  {c:'VN',f:'🇻🇳',n:'Vietnam', eligible:true},
+  {c:'TH',f:'🇹🇭',n:'Thailand', eligible:true},
+  {c:'ID',f:'🇮🇩',n:'Indonesia', eligible:true},
+  {c:'ES',f:'🇪🇸',n:'Spain', eligible:true},
+  {c:'PE',f:'🇵🇪',n:'Peru', eligible:true},
+  // configured for onboarding, no contract uploaded yet
+  {c:'CO',f:'🇨🇴',n:'Colombia', eligible:true},
+  {c:'PH',f:'🇵🇭',n:'Philippines', eligible:true},
+  {c:'BR',f:'🇧🇷',n:'Brazil', eligible:true},
+  {c:'MX',f:'🇲🇽',n:'Mexico', eligible:true},
+  {c:'IN',f:'🇮🇳',n:'India', eligible:true},
+  {c:'PK',f:'🇵🇰',n:'Pakistan', eligible:true},
+  {c:'BD',f:'🇧🇩',n:'Bangladesh', eligible:true},
+  {c:'NG',f:'🇳🇬',n:'Nigeria', eligible:true},
+  {c:'KE',f:'🇰🇪',n:'Kenya', eligible:true},
+  {c:'GH',f:'🇬🇭',n:'Ghana', eligible:true},
+  {c:'EG',f:'🇪🇬',n:'Egypt', eligible:true},
+  {c:'MA',f:'🇲🇦',n:'Morocco', eligible:true},
+  {c:'ZA',f:'🇿🇦',n:'South Africa', eligible:true},
+  {c:'TR',f:'🇹🇷',n:'Turkey', eligible:true},
+  {c:'PL',f:'🇵🇱',n:'Poland', eligible:true},
+  {c:'UA',f:'🇺🇦',n:'Ukraine', eligible:true},
+  {c:'RO',f:'🇷🇴',n:'Romania', eligible:true},
+  // onboarding not configured yet — never listed
+  {c:'JO',f:'🇯🇴',n:'Jordan', eligible:false},
+  {c:'TN',f:'🇹🇳',n:'Tunisia', eligible:false},
+];
+const C=c=>COUNTRIES.find(x=>x.c===c);
+
+function v(n,st,pub,signers,note,by,upd,file){
+  return{n,status:st,published:pub,updated:upd||pub,signers,note,by,
+    file:file===undefined?('contract_v'+n+'.pdf'):file,hash:'sha256:'+Math.abs(n*7919*31).toString(16).padStart(8,'0')+'…'};
+}
+let ROWS=[
+  {c:'KR',doc:'Data Processing Addendum', versions:[
+    v(2,'active','2025-05-14',218,'Revised DPA from counsel.',ME),
+    v(1,'superseded','2024-11-02',96,'Initial DPA.','J. Park')]},
+  {c:'CL',doc:'Independent Contractor Agreement', versions:[
+    v(3,'active','2026-07-01',812,'Updated payment terms, clause 7.',ME),
+    v(2,'superseded','2026-02-11',540,'Added dispute resolution section.',ME),
+    v(1,'superseded','2025-08-01',210,'Initial agreement.','L. Ortiz')]},
+  {c:'PT',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-07-01',431,'GDPR data-processing clauses aligned with 2026 policy.',ME),
+    v(1,'superseded','2025-09-15',188,'Initial agreement.','L. Ortiz')]},
+  {c:'PE',doc:'Independent Contractor Agreement', versions:[
+    v(1,'active','2026-01-10',77,'Initial agreement.',ME)]},
+  {c:'VN',doc:'Independent Contractor Agreement', versions:[
+    v(1,'active','2026-05-07',364,'Initial agreement.','T. Nguyen')]},
+  {c:'ID',doc:'Independent Contractor Agreement', versions:[
+    v(4,'active','2026-05-05',1204,'Law 24/2009 language compliance review.',ME),
+    v(3,'superseded','2025-12-01',900,'Clause 12 rewrite.',ME),
+    v(2,'superseded','2025-06-01',611,'Payment schedule.',ME),
+    v(1,'superseded','2025-01-04',300,'Initial agreement.','L. Ortiz')]},
+  {c:'CO',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-07-22',148,'Rate schedule update.',ME),
+    v(1,'superseded','2026-02-03',61,'Initial agreement.','L. Ortiz')]},
+  {c:'PH',doc:'Independent Contractor Agreement', versions:[
+    v(3,'active','2026-06-30',2140,'Clause 4 clarification.',ME),
+    v(2,'superseded','2025-11-18',1502,'Payment terms.',ME),
+    v(1,'superseded','2025-04-02',780,'Initial agreement.','L. Ortiz')]},
+  {c:'BR',doc:'Master Services Agreement', versions:[
+    v(1,'active','2026-06-11',309,'Initial agreement.','T. Nguyen')]},
+  {c:'MX',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-04-19',433,'Annual review.',ME),
+    v(1,'superseded','2025-07-07',210,'Initial agreement.',ME)]},
+  {c:'IN',doc:'Independent Contractor Agreement', versions:[
+    v(5,'active','2026-08-03',3866,'Clause 11 rewrite.',ME),
+    v(4,'superseded','2026-01-20',2901,'Tax wording.',ME),
+    v(3,'superseded','2025-08-14',1988,'Payment schedule.','J. Park'),
+    v(2,'superseded','2025-03-05',1204,'Clause 6 update.',ME),
+    v(1,'superseded','2024-10-01',540,'Initial agreement.','L. Ortiz')]},
+  {c:'PK',doc:'Independent Contractor Agreement', versions:[
+    v(1,'active','2026-05-28',612,'Initial agreement.','T. Nguyen')]},
+  {c:'BD',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-03-16',877,'Dispute resolution added.',ME),
+    v(1,'superseded','2025-09-09',402,'Initial agreement.',ME)]},
+  {c:'KE',doc:'Independent Contractor Agreement', versions:[
+    v(2,'active','2026-02-24',255,'Annual review.','J. Park'),
+    v(1,'superseded','2025-05-12',118,'Initial agreement.','J. Park')]},
+  {c:'ZA',doc:'Master Services Agreement', versions:[
+    v(1,'active','2026-01-30',196,'Initial agreement.',ME)]},
+  {c:'EG',doc:'Independent Contractor Agreement', versions:[
+    v(3,'active','2026-07-14',1031,'Clause 9 indemnity.',ME),
+    v(2,'superseded','2025-12-19',744,'Payment terms.',ME),
+    v(1,'superseded','2025-06-23',330,'Initial agreement.','L. Ortiz')]},
+  {c:'MA',doc:'Independent Contractor Agreement', versions:[
+    v(1,'active','2025-10-08',87,'Initial agreement.','L. Ortiz')]},
+  {c:'ES',doc:'Master Services Agreement', versions:[
+    v(2,'active','2026-05-04',522,'Annual review.',ME),
+    v(1,'superseded','2025-03-01',241,'Initial agreement.','L. Ortiz')]},
+];
+const rowFor=c=>ROWS.find(r=>r.c===c);
+const byStatus=(r,s)=>r.versions.find(x=>x.status===s);
+/* No draft state. A contract is either published or it doesn't exist yet, so every row in
+   this table is live and there is nothing to derive — the row IS its active version.
+   'superseded' exists on older versions but never surfaces as a row status.
+   There is no retired/offline state either: a contract is only ever replaced, never
+   withdrawn. Closing a country is the Onboarding tab's job, not this one's. */
+const cur=r=>byStatus(r,'active')||r.versions[0];
+const nextVersion=r=>r?Math.max(0,...r.versions.map(x=>x.n))+1:1;   // next free integer
+const STATUS_META={active:['p-active','Active'],superseded:['p-super','Replaced']};
+const fmt=d=>{if(!d)return '\u2014';const[y,m,dd]=d.split('-');return `${m}/${dd}/${y}`;};   // display only — data stays ISO
+/* Effective from = when the live version went live (publish date, since there's no scheduling).
+   Last update  = the most recent change to anything for this country. */
+const effectiveFrom=r=>{const a=byStatus(r,'active');return a?a.published:null;};
+const lastUpdate=r=>[...r.versions.map(x=>x.updated),r.touched].filter(Boolean).sort().pop()||null;
+let SEQ=0;
+const touch=r=>{r.touched=TODAY; r.seq=++SEQ;};   // stamp the date for display, the counter for ordering
+const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+/* =================== TABLE =================== */
+let FLASH=null;   // country whose row was just changed
+function flashRow(c){FLASH=c;}
+const PER_PAGE=10;
+let PAGE=1;
+function goPage(n){PAGE=n;render();document.querySelector('.card').scrollIntoView({block:'start',behavior:'smooth'});}
+/* Recency by default: with pagination, an alphabetical sort can bury a just-published
+   country several pages deep. Country stays one click away for browsing, and search
+   handles "find a known country" better than either sort does. */
+let SORT={key:'updated',dir:'desc'};
+function setSort(key){
+  SORT = SORT.key===key ? {key,dir:SORT.dir==='desc'?'asc':'desc'}
+                        : {key,dir:key==='country'?'asc':'desc'};
+  PAGE=1; render();
+}
+function sortIcon(key){
+  const on=SORT.key===key;
+  return `<span class="sorticon"><i class="up${on&&SORT.dir==='asc'?'':' off'}"></i><i class="dn${on&&SORT.dir==='desc'?'':' off'}"></i></span>`;
+}
+function render(){
+  const q=(document.getElementById('q').value||'').toLowerCase();
+  // The table lists CONTRACTS. A country with no document has no row; ineligible countries never appear.
+  const rows=ROWS.filter(r=>{
+    if(!r.versions.length) return false;
+    const cc=C(r.c); if(!cc.eligible) return false;
+    /* Country name only — every search field in the admin portal searches a single field. */
+    if(q && !cc.n.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const key=r=>SORT.key==='effective'?effectiveFrom(r):SORT.key==='updated'?lastUpdate(r):C(r.c).n;
+  rows.sort((a,b)=>{
+    const x=key(a), y=key(b);
+    if(!x&&!y) return C(a.c).n.localeCompare(C(b.c).n);
+    if(!x) return SORT.dir==='desc' ? 1 : -1;            // blanks trail descending, lead ascending
+    if(!y) return SORT.dir==='desc' ? -1 : 1;
+    if(x!==y) return SORT.dir==='desc' ? (x<y?1:-1) : (x<y?-1:1);
+    // same date: break the tie by actual order of activity, then alphabetically
+    if(SORT.key==='updated'){
+      const sa=a.seq||0, sb=b.seq||0;
+      if(sa!==sb) return SORT.dir==='desc' ? sb-sa : sa-sb;
+    }
+    return C(a.c).n.localeCompare(C(b.c).n);
+  });
+
+  // a just-changed row may sit on another page — follow it there
+  if(FLASH){
+    const i=rows.findIndex(r=>r.c===FLASH);
+    if(i>=0) PAGE=Math.floor(i/PER_PAGE)+1;
+  }
+  const total=rows.length, pages=Math.max(1,Math.ceil(total/PER_PAGE));
+  PAGE=Math.min(Math.max(1,PAGE),pages);
+  const from=(PAGE-1)*PER_PAGE, pageRows=rows.slice(from,from+PER_PAGE);
+
+  if(!rows.length){
+    document.getElementById('tableSlot').innerHTML=
+      `<div class="emptystate"><div class="big">⊘</div><h3>No contracts match</h3>
+       <p>Search matches country names. Try another country, or clear the search.</p></div>`;
+    return;
+  }
+  const tr=r=>{
+    const cc=C(r.c), vv=cur(r);
+    return `<tr data-c="${r.c}" onclick="viewContract('${r.c}')">
+      <td><div class="cty"><span class="fl">${cc.f}</span>${cc.n}</div></td>
+      <td class="doccell"><div class="doc"><span class="docname" title="${esc(r.doc)}"><span class="nm">${esc(r.doc)}</span></span></div></td>
+      <td class="mono">V${vv.n}</td>
+      <td class="mono">${fmt(effectiveFrom(r))}</td>
+      <td class="mono">${fmt(lastUpdate(r))}</td>
+      <td class="act" onclick="event.stopPropagation()">
+        <button class="kebab" onclick="menu(event,'${r.c}')">⋮</button>
+      </td>
+    </tr>`;
+  };
+  setTimeout(()=>{
+    if(!FLASH) return;
+    const tr=document.querySelector(`tbody tr[data-c="${FLASH}"]`); FLASH=null;
+    if(!tr) return;
+    tr.classList.add('flash');
+    tr.scrollIntoView({block:'nearest',behavior:'smooth'});
+    setTimeout(()=>tr.classList.remove('flash'),2600);
+  },0);
+  document.getElementById('tableSlot').innerHTML=`<table><thead><tr>
+      <th class="sortable" onclick="setSort('country')"><span class="thsort">Country${sortIcon('country')}</span></th>
+      <th>Contract</th><th>Version</th>
+      <th class="sortable" onclick="setSort('effective')"><span class="thsort">Effective From${sortIcon('effective')}</span></th>
+      <th class="sortable" onclick="setSort('updated')"><span class="thsort">Last Update${sortIcon('updated')}</span></th>
+      <th>Actions</th>
+    </tr></thead><tbody>${pageRows.map(tr).join('')}</tbody></table>
+    ${pages>1?`<div class="pager">
+      <div class="pbtns">
+        <button class="pbtn arw" ${PAGE===1?'disabled':''} onclick="goPage(${PAGE-1})" aria-label="Previous page">‹</button>
+        ${Array.from({length:pages},(_,i)=>i+1).map(n=>
+          `<button class="pbtn ${n===PAGE?'on':''}" onclick="goPage(${n})">${n}</button>`).join('')}
+        <button class="pbtn arw" ${PAGE===pages?'disabled':''} onclick="goPage(${PAGE+1})" aria-label="Next page">›</button>
+      </div></div>`:''}`;
+}
+
+function closeMenu(){const m=document.getElementById('rowmenu');if(m)m.remove();}
+function menu(e,c){
+  e.stopPropagation(); closeMenu();
+  const d=document.createElement('div'); d.className='menu'; d.id='rowmenu';
+  d.innerHTML=`
+    <button onclick="closeMenu();openWizard('${c}')">Upload new version</button>
+    <button onclick="closeMenu();viewContract('${c}')">View contract</button>
+    <div class="sep"></div>
+    <button onclick="closeMenu();history_('${c}')">Version history</button>`;
+  document.body.appendChild(d);
+  // anchor to the kebab, right-aligned, flipping above when there's no room below
+  const rect=e.currentTarget.getBoundingClientRect(), w=d.offsetWidth, h=d.offsetHeight;
+  const below=window.innerHeight-rect.bottom-8;
+  d.style.left=Math.max(8,Math.min(rect.right-w,window.innerWidth-w-8))+'px';
+  d.style.top=(below<h && rect.top>h ? Math.max(8,rect.top-h-6) : rect.bottom+6)+'px';
+  setTimeout(()=>{
+    document.addEventListener('click',closeMenu,{once:true});
+    window.addEventListener('scroll',closeMenu,{once:true,capture:true});
+  },0);
+}
+/* =================== VIEW (ACTIVE = READ ONLY) =================== */
+let VIEW_EXPANDED=false;
+function viewContract(c){
+  const cc=C(c), r=rowFor(c), av=byStatus(r,'active');
+  scrim(`<div class="modal">
+    <div class="mhead">
+      <h3>${cc.f} ${cc.n} <span class="pill p-active">Active</span></h3>
+      <p>This contract is live. Published versions can't be changed — upload a new version to replace it.</p>
+      <button class="x" onclick="closeScrim()">✕</button>
+    </div>
+    <div class="mbody">
+      <div class="review">
+        <div class="rr">
+          <div class="c"><div class="k">Document Name</div><div class="v">${esc(r.doc)}</div></div>
+          <div class="c"><div class="k">Version</div><div class="v">V${av.n}</div></div>
+        </div>
+        <div class="rr">
+          <div class="c"><div class="k">Effective From</div><div class="v">${fmt(av.published)}</div></div>
+          <div class="c"><div class="k">File</div><div class="v"><button class="filelink" onclick="toast('Would open ${esc(av.file)} in the document viewer — download available there')"><span class="fi">▤</span>${esc(av.file)}</button></div></div>
+        </div>
+        ${av.note?`<div class="rr"><div class="c full"><div class="k">Change Note (Internal Only)</div>
+          <div class="v" style="font-weight:400">${esc(av.note)}</div></div></div>`:''}
+      </div>
+      <div style="margin-top:14px"><button class="linkbtn ${VIEW_EXPANDED?'open':''}" onclick="VIEW_EXPANDED=!VIEW_EXPANDED;viewContract('${c}')">
+        ${VIEW_EXPANDED?'Hide version history':`View all ${r.versions.length} version${r.versions.length===1?'':'s'}`}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button></div>
+      ${VIEW_EXPANDED?`<div class="expando">${timelineHTML(r)}</div>`:''}
+    </div>
+    <div class="mfoot">
+      <div class="foothelp">Uploading a new version publishes as <strong>V${nextVersion(r)}</strong>.
+        V${av.n} is replaced and stays in version history.</div>
+      <button class="btn pri" onclick="openWizard('${c}')">Upload new version</button>
+    </div>
+  </div>`);
+}
+
+/* =================== VERSION HISTORY =================== */
+/* One timeline renderer, two hosts: expanded inline inside the view modal, or as a
+   standalone modal from the row menu. No side drawer — that pattern isn't used elsewhere. */
+function timelineHTML(r){
+  return `<div class="tl">
+    ${r.versions.map(x=>{const[pc,pl]=STATUS_META[x.status];return`
+      <div class="tlv ${x.status==='active'?'cur':''}">
+        <div class="vh"><span class="vn">V${x.n}</span><span class="pill ${pc}">${pl}</span></div>
+        <div class="vm">Published ${fmt(x.published)} by ${x.by}<br>${x.signers.toLocaleString()} agent${x.signers===1?'':'s'} signed</div>
+        ${x.note?`<div class="vnote">${esc(x.note)}</div>`
+                :`<div class="vnote" style="color:var(--ink3);font-style:italic">No change note</div>`}
+        <div class="vacts"><button onclick="toast('Would open ${esc(x.file)} in the document viewer')">View document</button></div>
+      </div>`}).join('')}
+  </div>`;
+}
+function history_(c){
+  const cc=C(c), r=rowFor(c);
+  scrim(`<div class="modal">
+    <div class="mhead"><h3>${cc.f} ${cc.n} — version history</h3>
+      <p>${esc(r.doc)} · ${r.versions.length} version${r.versions.length===1?'':'s'}</p>
+      <button class="x" onclick="closeScrim()">✕</button></div>
+    <div class="mbody" style="padding-bottom:8px">${timelineHTML(r)}</div>
+  </div>`);
+}
+
+/* =================== CREATE WIZARD =================== */
+/* One form, two contexts: a country's first contract, or a new version of a live one.
+   There is nowhere to park half-finished work — the wizard either publishes or discards,
+   so the form always starts empty and the previous version serves until the moment
+   Publish is pressed. */
+let W=null;
+function openWizard(prefill){
+  const r=prefill?rowFor(prefill):null;
+  W={step:1,c:prefill||null,locked:!!prefill,
+     doc:r?r.doc:'Independent Contractor Agreement',
+     file:null, note:'', attest:false,
+     forking:!!(r&&byStatus(r,'active')), fileErr:null};
+  drawWizard();
+}
+const wCountry=()=>W.c?C(W.c):null;
+const wRow=()=>W.c?rowFor(W.c):null;
+const wNextV=()=>nextVersion(wRow());
+
+function drawWizard(){
+  const s=W.step, r=wRow(), cc=wCountry();
+  const title = cc && W.forking ? `New version — ${cc.n}` : 'Upload legal contract';
+  scrim(`<div class="modal">
+    <div class="mhead"><h3>${title}</h3>
+      <p>Attach the country-specific agreement agents must sign during onboarding.</p>
+      <button class="x" onclick="tryCloseWizard()">✕</button></div>
+    <div class="steps">
+      <div class="stp ${s===1?'on':'done'}"><span class="n">${s>1?'✓':'1'}</span>Contract details</div>
+      <div class="stpline"></div>
+      <div class="stp ${s===2?'on':s>2?'done':''}"><span class="n">${s>2?'✓':'2'}</span>Upload file</div>
+      <div class="stpline"></div>
+      <div class="stp ${s===3?'on':''}"><span class="n">3</span>Review &amp; publish</div>
+    </div>
+    <div class="mbody">${s===1?step1():s===2?step2():step3()}</div>
+    <div class="mfoot">
+      ${s>1?`<button class="btn" onclick="W.step--;drawWizard()">Back</button>`
+           :`<button class="btn" onclick="tryCloseWizard()">Cancel</button>`}
+      <div class="sp"></div>
+      ${s<3?`<button class="btn pri" ${canContinue()?'':'disabled'} onclick="W.step++;drawWizard()">Continue</button>`
+           :`<button class="btn pri" ${canContinue()?'':'disabled'} onclick="doPublish()">Publish contract</button>`}
+    </div>
+  </div>`);
+}
+
+function step1(){
+  const cc=wCountry(), r=wRow();
+  return `
+  <div class="f">
+    <label>Country<span class="info" tabindex="0">i<span class="tip">Only countries with a completed configuration in the Onboarding tab appear here.</span></span></label>
+    <div class="csel">
+      <button class="cselbtn ${cc?'has':''}" ${W.locked?'disabled':''} onclick="toggleCdrop(event)">
+        ${cc?`<span class="fl">${cc.f}</span>${cc.n}`:'Select a country'}
+        ${W.locked?'':'<span class="car">▾</span>'}
+      </button>
+    </div>
+    ${(()=>{const pub=r?r.versions.length:0;
+      return pub?`<div class="help">${cc.n} has ${pub} published version${pub===1?'':'s'}. This will publish as V${wNextV()}.</div>`:'';})()}
+  </div>
+  <div class="f">
+    <label>Document Name</label>
+    <input type="text" maxlength="60" value="${esc(W.doc)}" oninput="W.doc=this.value;refreshCount(this,60)">
+    <div class="cnt">${W.doc.length}/60</div>
+  </div>`;
+}
+function refreshCount(el,max){
+  el.closest('.f').querySelector('.cnt').textContent=el.value.length+'/'+max;
+  refreshFoot();
+}
+
+const SAMPLES=[
+  {name:'ICA_2026_v1.pdf',size:1.8,label:'Sample contract'},
+  {name:'ICA_2026_revised.pdf',size:2.1,label:'Alternative sample'},
+];
+function step2(){
+  const cc=wCountry(), nv=wNextV(), f=W.file;
+  return `
+  <div class="f">
+    <label>Contract Document</label>
+    ${f?`<div class="filecard">
+        <div class="fic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+             ><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/></svg></div>
+        <div style="flex:1">
+          <div class="fn">${esc(f.name)}</div>
+          <div class="fm">${f.size} MB · ${f.pages} pages</div>
+        </div>
+        <button class="rm" onclick="W.file=null;W.attest=false;drawWizard()" title="Remove file" aria-label="Remove file">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+      </div>`
+    :`<div class="dz" ondragover="event.preventDefault();this.classList.add('drag')"
+          ondragleave="this.classList.remove('drag')" ondrop="dropFile(event)">
+        <div class="up"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+        <div class="t"><span class="browse" onclick="document.getElementById('realfile').click()">Click to upload</span> or drag and drop</div>
+        <div class="s">PDF (max. 20 MB)</div>
+        <input type="file" id="realfile" accept=".pdf" style="display:none" onchange="realFile(this)">
+        <div class="samples"><div class="lbl">Or use a sample file</div>
+          ${SAMPLES.map((s,i)=>`<button onclick="pickSample(${i})">${s.name} <span>— ${s.label}</span></button>`).join('')}
+        </div></div>
+      ${W.fileErr?`<div class="inl i-err"><span class="i">✕</span><span>${W.fileErr}</span></div>`:''}`}
+  </div>
+
+  <div class="f">
+    <label>Version<span class="info" tabindex="0">i<span class="tip">Assigned automatically.
+      ${nv>1?`V${nv-1} is replaced and stays in version history.`:'This is the first version for this country.'}
+      Takes effect the moment you publish.</span></span></label>
+    <div><span class="vchip">Publishing as V${nv}</span></div>
+  </div>
+
+  <div class="f">
+    <label>Change Note <span class="opt">(Internal Only)</span></label>
+    <textarea maxlength="300" placeholder="${nv>1?'Describe what changed in this version':'Describe what this document covers'}"
+      oninput="W.note=this.value;refreshCount(this,300)">${esc(W.note)}</textarea>
+    <div class="cnt">${W.note.length}/300</div>
+  </div>`;
+}
+
+/* Attaching a different document invalidates the legal attestation — it was made about
+   the file that was there, not this one. */
+function pickSample(i){
+  const s=SAMPLES[i]; W.fileErr=null; W.attest=false;
+  W.file={name:s.name,size:s.size,pages:Math.round(s.size*7)+4,hash:'sha256:'+(i*104729+7).toString(16).padStart(8,'0')+'…'};
+  drawWizard();
+}
+function realFile(el){
+  const f=el.files[0]; if(!f)return; W.fileErr=null;
+  const mb=+(f.size/1048576).toFixed(1);
+  if(!/\.pdf$/i.test(f.name)){W.fileErr=`<b>${esc(f.name)} isn't a PDF.</b> Only PDF is accepted.`;return drawWizard();}
+  if(mb>20){W.fileErr=`<b>${esc(f.name)} is ${mb} MB.</b> The limit is 20 MB. Compress the PDF and try again.`;return drawWizard();}
+  W.file={name:f.name,size:mb,pages:'—',hash:'sha256:'+Math.abs(f.size*31).toString(16).slice(0,8)+'…'};
+  W.attest=false;
+  drawWizard();
+}
+function dropFile(e){e.preventDefault();e.currentTarget.classList.remove('drag');
+  const f=e.dataTransfer.files[0]; if(f) realFile({files:[f]});}
+
+let cdropOff=null;
+function closeCdrop(){
+  const d=document.getElementById('cdrop'); if(d) d.remove();
+  if(cdropOff){document.removeEventListener('click',cdropOff,true); cdropOff=null;}
+}
+function cdropOptions(q){
+  q=(q||'').trim().toLowerCase();
+  const el=COUNTRIES.filter(x=>x.eligible && x.n.toLowerCase().includes(q))
+                    .sort((a,b)=>a.n.localeCompare(b.n));
+  if(!el.length) return `<div class="cnone">No countries match \u201C${esc(q)}\u201D</div>`;
+  /* Only the live version is worth naming here. The number the upload will publish as is
+     already stated on the next step, and a country with nothing live needs no label —
+     the empty right edge says it. */
+  return el.map(x=>{const r=rowFor(x.c);
+    const h=(!r||!r.versions.length)?'':`Active V${cur(r).n}`;
+    return`<button class="copt" onclick="pickCountry('${x.c}')"><span class="fl">${x.f}</span>${x.n}
+      ${h?`<span class="hintx">${h}</span>`:''}</button>`}).join('');
+}
+function filterCdrop(v){const l=document.getElementById('cdlist'); if(l) l.innerHTML=cdropOptions(v);}
+function cdropKey(e){
+  if(e.key==='Escape'){e.stopPropagation();closeCdrop();return;}
+  if(e.key==='Enter'){const f=document.querySelector('#cdlist .copt'); if(f) f.click();}
+}
+function toggleCdrop(e){
+  e.stopPropagation();
+  if(document.getElementById('cdrop'))return closeCdrop();
+  const rect=e.currentTarget.getBoundingClientRect();
+  const d=document.createElement('div'); d.id='cdrop'; d.className='cdrop';
+  d.innerHTML=`<div class="cdsearch"><span class="mag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.6"/><path d="M16.1 16.1 21 21"/></svg></span>
+      <input type="text" id="cq" placeholder="Search country\u2026" autocomplete="off"
+             oninput="filterCdrop(this.value)" onkeydown="cdropKey(event)"></div>
+    <div class="cdlist" id="cdlist">${cdropOptions('')}</div>`;
+  document.body.appendChild(d);
+  const below=window.innerHeight-rect.bottom-8, above=rect.top-8;
+  const wanted=Math.min(340,d.scrollHeight+2);
+  d.style.width=rect.width+'px'; d.style.left=rect.left+'px';
+  if(below<wanted && above>below){const hh=Math.min(wanted,above);
+    d.style.maxHeight=hh+'px'; d.style.top=(rect.top-hh-5)+'px';}
+  else {d.style.maxHeight=Math.max(180,Math.min(wanted,below))+'px'; d.style.top=(rect.bottom+5)+'px';}
+  document.getElementById('cq').focus();
+  cdropOff=ev=>{const dd=document.getElementById('cdrop'); if(dd&&dd.contains(ev.target))return; closeCdrop();};
+  setTimeout(()=>document.addEventListener('click',cdropOff,true),0);
+}
+function pickCountry(c){
+  closeCdrop();
+  const r=rowFor(c);
+  // switching country only changes the default document name — nothing has been entered to carry over
+  W.c=c;
+  W.doc  = r ? r.doc : 'Independent Contractor Agreement';
+  W.forking = !!(r && byStatus(r,'active'));
+  drawWizard();   // nothing is written yet — the admin has to publish
+}
+
+function canContinue(){
+  if(W.step===1) return !!W.c && W.doc.trim().length>0;
+  if(W.step===3) return !!W.attest;
+  const cc=wCountry();
+  if(!W.file) return false;
+  if(!W.note.trim()) return false;   // required for tracking and accountability
+  return true;
+}
+function refreshFoot(){const b=document.querySelector('.mfoot .btn.pri');if(b)b.disabled=!canContinue();}
+
+/* Publishing is the only write. There is no intermediate record to update, so this
+   builds the new version and puts it live in one step. */
+function commit(){
+  let r=wRow();
+  if(!r){r={c:W.c,doc:W.doc,versions:[]};ROWS.push(r);}
+  r.doc=W.doc; touch(r);
+  const ver=v(nextVersion(r),'active',TODAY,0,W.note,ME,TODAY,W.file?W.file.name:null);
+  if(W.file) ver.hash=W.file.hash;
+  const av=byStatus(r,'active'); if(av) av.status='superseded';   // the previous live version is replaced
+  r.versions.unshift(ver);
+}
+/* Closing genuinely discards — there is no draft to fall back on, so the warning has to
+   carry the full weight of that. */
+function tryCloseWizard(){
+  if(W && W.c && dirty()){
+    const c=W.c;
+    scrim(`<div class="modal" style="width:min(430px,100%)">
+      <div class="mhead"><h3>Discard this contract for ${C(c).n}?</h3>
+        <p>Nothing is saved until you publish, so this work will be lost and you'll start over.</p></div>
+      <div class="mfoot"><div class="sp"></div>
+        <button class="btn" onclick="drawWizard()">Keep editing</button>
+        <button class="btn dngr" onclick="closeScrim()">Discard</button></div>
+    </div>`);
+    return;
+  }
+  closeScrim();
+}
+/* Has the admin actually entered anything worth warning about? */
+function dirty(){
+  return !!(W && W.c);   // nothing is persisted, so any progress at all is at risk
+}
+
+function step3(){
+  const cc=wCountry(), r=wRow(), nv=wNextV();
+  const prev=r?byStatus(r,'active'):null;
+  return `
+  <div class="review">
+    <div class="rr">
+      <div class="c"><div class="k">Country</div><div class="v">${cc.f} ${cc.n}</div></div>
+      <div class="c"><div class="k">Version</div><div class="v">V${nv}${prev?` <span style="font-weight:400;color:var(--ink3)">· replaces V${prev.n}</span>`:''}</div></div>
+    </div>
+    <div class="rr">
+      <div class="c"><div class="k">Document Name</div><div class="v">${esc(W.doc)}</div></div>
+    </div>
+    <div class="rr">
+      <div class="c"><div class="k">Effective From</div><div class="v">On publish</div></div>
+      <div class="c"><div class="k">File</div><div class="v" style="font-size:12.6px">${esc(W.file.name)}</div></div>
+    </div>
+    <div class="rr"><div class="c full"><div class="k">Change Note (Internal Only)</div>
+      <div class="v" style="font-weight:400">${esc(W.note)||'—'}</div></div></div>
+  </div>
+  <div class="inl i-mute"><span class="i">🔒</span><span><b>${prev
+      ?`V${prev.n} is replaced and stays in version history.`
+      :`Published versions can't be edited — only replaced by a later version.`}</b></span></div>
+  <div class="attest">
+    <input type="checkbox" id="att" ${W.attest?'checked':''} onchange="W.attest=this.checked;refreshFoot()">
+    <label for="att">I confirm this document was reviewed by legal for this jurisdiction.</label>
+  </div>`;
+}
+function doPublish(){
+  if(!W.attest) return;
+  const cc=wCountry(), nv=wNextV(), r=wRow();
+  const prev=r?byStatus(r,'active'):null;
+  const n=prev?prev.signers:0;
+  commit(); flashRow(cc.c); closeScrim(); render(); W=null;
+  toast(`V${nv} published for ${cc.n}. New agents will sign this version.`,'good');
+}
+
+/* =================== PLUMBING =================== */
+function scrim(html){
+  closeCdrop();
+  const o=document.getElementById('overlay');
+  o.innerHTML=`<div class="scrim" onclick="closeScrim()">${html}</div>`;
+  const m=o.querySelector('.modal'); if(m) m.onclick=e=>e.stopPropagation();
+}
+function closeScrim(){closeCdrop();closeMenu();VIEW_EXPANDED=false;document.getElementById('overlay').innerHTML='';}
+function toast(msg,kind){
+  const t=document.createElement('div'); t.className='toast '+(kind||'');
+  t.innerHTML=`<span class="d">${kind==='good'?'✓':'•'}</span><span>${msg}</span>`;
+  document.getElementById('toasts').appendChild(t);
+  setTimeout(()=>t.remove(),4200);
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeScrim();});
+render();
+</script>
+</body>
+</html>
