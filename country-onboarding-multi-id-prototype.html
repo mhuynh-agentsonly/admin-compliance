@@ -91,8 +91,14 @@ button{font-family:inherit}
 .stepper .n{width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:flex;align-items:center;
   justify-content:center;font-size:12px;font-weight:700;color:#fff;background:var(--orange)}
 .stepper .st.now{color:var(--orange-ink)}
+/* A step already passed keeps the solid orange marker but drops the orange text,
+   so only the step you are on reads as current. */
+.stepper .st.done{color:var(--ink)}
 .stepper .st.todo{color:#c48a45}
 .stepper .st.todo .n{background:#fdc066}
+button.st{background:none;border:0;font-family:inherit;cursor:pointer;border-radius:8px}
+button.st:hover{color:var(--orange-ink)}
+button.st:focus-visible{outline:2px solid var(--orange-ink);outline-offset:-2px}
 
 .body{padding:30px 34px 0}
 .h2{margin:0 0 4px;font-size:20px;font-weight:600;letter-spacing:-.01em}
@@ -156,9 +162,66 @@ button{font-family:inherit}
   border:6px solid transparent;border-right-color:var(--ink)}
 .addwrap:hover .tip.show,.addwrap:focus-within .tip.show{display:block}
 
+/* --- Preview (step 4) ------------------------------------------------------
+   A read-only rendering of the agent form, laid out to match the Preview frame
+   in the Nov 19 board. The address and identification blocks are built from what
+   Ops typed; verification and consent are fixed sample content, since this
+   feature does not change them. */
+.pv .pvh{margin:30px 0 18px;font-size:17px;font-weight:600;color:var(--ink);letter-spacing:-.01em}
+.pv .pvsub{margin:26px 0 12px;font-size:13.5px;font-weight:700;color:var(--ink)}
+.pvform{max-width:400px}
+.pvgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.pvf{min-width:0}
+.pvf label{display:block;font-size:11.5px;color:var(--ink2);margin-bottom:5px}
+.pvbox{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;
+  background:#fff;padding:9px 12px;font-size:13px;color:var(--muted);min-height:38px}
+.pvbox .val{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pvbox .val.set{color:var(--ink)}
+.pvbox svg{width:15px;height:15px;flex:none;stroke:var(--ink3);stroke-width:1.9;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.pvbox .fl{font-size:14px;flex:none;
+  font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif}
+.pvstack .pvf{margin-bottom:12px}
+
+/* Verification */
+.pvup{max-width:400px;margin-bottom:18px}
+.pvup .q{font-size:12.5px;color:var(--ink);line-height:1.45}
+.pvup .n{font-size:12px;color:var(--ink2);margin-bottom:8px}
+.pvdz{border:1px solid var(--border);border-radius:10px;background:#fff;padding:18px 14px;text-align:center}
+.pvdz .ic{width:32px;height:32px;border-radius:50%;background:var(--card);margin:0 auto 8px;
+  display:flex;align-items:center;justify-content:center;color:var(--ink2)}
+.pvdz .ic svg{width:15px;height:15px;stroke:currentColor;stroke-width:1.8;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.pvdz .t{font-size:12px;color:var(--ink2)}
+.pvdz .t b{color:var(--blue);font-weight:600}
+.pvdz .m{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Consent & Declaration — quoted blocks with a blue rail, as in the board */
+.pvquote{border-left:3px solid var(--blue);background:var(--card);border-radius:0 6px 6px 0;
+  padding:13px 16px;max-width:620px}
+.pvquote p{margin:0;font-size:12.5px;color:var(--ink2);line-height:1.6}
+.pvquote ul{margin:4px 0 0 16px;padding:0}
+.pvquote li{font-size:12.5px;color:var(--ink2);line-height:1.6}
+.pvdecl{border-left:3px solid var(--blue);max-width:620px;border-radius:0 6px 6px 0;overflow:hidden}
+.pvdecl .intro{background:var(--card);padding:13px 16px;font-size:12.5px;color:var(--ink);
+  font-weight:600;line-height:1.55}
+.pvdecl .r{background:var(--card);margin-top:3px;padding:11px 16px;display:flex;gap:16px;
+  align-items:flex-start;font-size:12.5px;color:var(--ink2);line-height:1.5}
+.pvdecl .r .s{flex:1;min-width:0}
+.pvdecl .yn{flex:none;display:flex;gap:14px;align-items:center;color:var(--ink2);font-size:12px}
+.pvdecl .yn span{display:inline-flex;align-items:center;gap:6px}
+.pvdecl .yn i{width:13px;height:13px;border:1px solid var(--border);border-radius:50%;
+  display:inline-block;background:#fff}
+.publish{margin-left:auto;background:var(--blue);color:#fff;border:0;border-radius:8px;padding:10px 30px;
+  font-size:14.5px;font-weight:600;cursor:pointer}
+.publish:hover{background:var(--blue-d)}
+
 /* --- Footer --- */
 .foot{border-top:1px solid var(--line);margin-top:30px;padding:16px 34px 22px;display:flex;
-  align-items:center;justify-content:flex-end}
+  align-items:center;gap:20px;justify-content:space-between}
+.foot .msg{font-size:13px;color:var(--ink2)}
+/* Hidden rather than removed, so the button does not shift when the note clears. */
+.foot .msg.hide{visibility:hidden}
 .next{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:10px 30px;
   font-size:14.5px;font-weight:600;cursor:pointer}
 .next:hover:not(:disabled){background:var(--blue-d)}
@@ -223,13 +286,9 @@ button{font-family:inherit}
     </div>
 
     <section class="panel">
-      <div class="stepper">
-        <div class="st now"><span class="n">1</span>Personal Info</div>
-        <div class="st todo"><span class="n">2</span>Verification</div>
-        <div class="st todo"><span class="n">3</span>Consent &amp; Declaration</div>
-      </div>
+      <div class="stepper" id="stepper"></div>
 
-      <div class="body">
+      <div class="body" id="pane1">
         <h2 class="h2">Select Country</h2>
         <div class="country">
           <div class="selectbox">
@@ -278,8 +337,12 @@ button{font-family:inherit}
 
       </div>
 
+      <div class="body pv" id="pane4" hidden></div>
+
       <div class="foot">
-        <button class="next" id="nextBtn">Next</button>
+        <span class="msg" id="footMsg">The Government ID Number fields and at least 2 address fields must be filled before you can continue.</span>
+        <button class="next" id="nextBtn" onclick="goPreview()">Next</button>
+        <button class="publish" id="publishBtn" hidden>Publish</button>
       </div>
     </section>
   </main>
@@ -291,8 +354,7 @@ button{font-family:inherit}
   <span class="scopetag">Multi-ID</span>
   <span class="sl">Scenario</span>
   <span class="segwrap">
-    <button class="sb" id="s-today" onclick="scenario('today')">Today — 1 ID</button>
-    <button class="sb" id="s-pt"    onclick="scenario('pt')">Portugal — 2 IDs</button>
+    <button class="sb" id="s-pt"    onclick="scenario('pt')">Portugal — default</button>
     <button class="sb" id="s-max"   onclick="scenario('max')">Max (3)</button>
   </span>
 </div>
@@ -308,13 +370,9 @@ const MAX_IDS = 3, ID_LIMIT = 60, ADDR_LIMIT = 60;
 const ADDR_SLOTS = ['Administrative Area','Subadministrative Area','Locality','Sublocality','Street','Postal Code'];
 
 const PRESETS = {
-  today: {
-    addr:['Periféreia (Region)','Regional Unit','Municipality / City','','Street','Taxidromikos Kodikas (TK)'],
-    ids:['Δελτίο Ταυτότητας (ID Card Number)'], country:'Greece', flag:'🇬🇷'
-  },
   pt: {
     addr:['Distrito (District)','Concelho (Municipality)','Localidade (City / Town)','Freguesia (Parish)','Rua (Street)','Código Postal'],
-    ids:['Número de Identificação Civil (Citizen Card)','Número de Título de Residência (Residence ID)'],
+    ids:['Número de Identificação Civil (Citizen Card)'],
     country:'Portugal', flag:'🇵🇹'
   },
   max: {
@@ -324,7 +382,30 @@ const PRESETS = {
   }
 };
 
-let state = {addr:[], ids:[], touched:[], country:'Portugal'};
+let state = {addr:[], ids:[], touched:[], country:'Portugal', flag:'🇵🇹', step:1};
+
+const STEPS = ['Personal Info','Verification','Consent & Declaration','Preview'];
+
+/* Fixed sample content for the two steps this prototype skips. They are not
+   affected by the identification change, so they are not configurable here. */
+const SAMPLE = {
+  govDoc:'Upload the front & back of your Número de Identificação Civil (Citizen Card).',
+  police:'Upload a screenshot of your Registo Criminal (Criminal Record Certificate)',
+  checks:['Identity verification (based on government-issued ID)',
+          'Portuguese Criminal Record Check (Registo Criminal)',
+          'Sex Offender Registry Check (if applicable)',
+          'Global Sanctions and Watchlist Check'],
+  span:7,
+  declIntro:'Please indicate whether you have been convicted of any of the following offenses '+
+            'under Portuguese law or equivalent foreign laws. A background check will be conducted '+
+            'to verify your response.',
+  decl:['Financial: Fraud, Embezzlement, Identity Theft, Money Laundering',
+        'Electronic: Cybercrime, Computer Misuse, Credit Card Fraud',
+        'Safety: Violent Crimes, Drug Trafficking/Sale, Human Trafficking, Stalking, Firearms and Weapons Violations',
+        'Other Serious Offences: Domestic Violence, Disorderly Conduct, Drug Possession (beyond personal use), '+
+        'False Statements, Public Indecency, Sexual Assault / Sexual Crimes, Child Pornography Possession or Distribution',
+        'Other: Any other criminal convictions of a serious nature not listed above']
+};
 let current = 'pt';
 
 
@@ -390,7 +471,24 @@ function gate(){
 
   const ok = addrFilled>=2 && idsFilled>=1 && !addrOver && !idsOver && !idsBlank;
   document.getElementById('nextBtn').disabled = !ok;
+  /* The note says the same thing as the disabled button, so it clears the moment
+     the button unlocks. */
+  document.getElementById('footMsg').classList.toggle('hide', ok);
+}
 
+function renderStepper(){
+  /* Steps 2 and 3 are deliberately not built — nothing in them changes for this
+     feature — so Next jumps straight from Personal Info to Preview. They still
+     appear in the indicator, and still read as passed once you are on Preview. */
+  document.getElementById('stepper').innerHTML = STEPS.map((label,i)=>{
+    const n = i+1;
+    const cls = n===state.step ? 'now' : (n < state.step ? 'done' : 'todo');
+    const inner = `<span class="n">${n}</span>${label}`;
+    const canGoBack = cls==='done' && (n===1);
+    return canGoBack
+      ? `<button class="st done" onclick="goStep(1)">${inner}</button>`
+      : `<div class="st ${cls}"${cls==='now'?' aria-current="step"':''}>${inner}</div>`;
+  }).join('');
 }
 
 function paint(){ renderIds(); gate(); }
@@ -433,20 +531,123 @@ function blurId(i){
   if((state.ids[i]||'').trim()==='') paint();
 }
 
+function goStep(n){
+  state.step = n;
+  document.getElementById('pane1').hidden = n!==1;
+  document.getElementById('pane4').hidden = n!==4;
+  document.getElementById('footMsg').hidden = n!==1;
+  document.getElementById('nextBtn').hidden = n!==1;
+  document.getElementById('publishBtn').hidden = n!==4;
+  if(n===4) document.getElementById('pane4').innerHTML = previewHTML();
+  renderStepper();
+  if(window.scrollTo) try{ window.scrollTo(0,0); }catch(e){}
+}
+function goPreview(){ if(!document.getElementById('nextBtn').disabled) goStep(4); }
+
+function previewHTML(){
+  const CHEV = '<svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>';
+  const CAL  = '<svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
+  const UPIC = '<svg viewBox="0 0 24 24"><path d="M12 15V4m0 0L8 8m4-4 4 4M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>';
+
+  /* Placeholder box. `lead`/`trail` carry the calendar icon, chevron or flag that
+     the real control would show. */
+  const box = (label, text, opts) => {
+    opts = opts || {};
+    return `<div class="pvf"><label>${esc(label)}</label><div class="pvbox">`+
+      (opts.lead||'')+
+      `<span class="val${opts.set?' set':''}">${esc(text)}</span>`+
+      (opts.trail||'')+
+    `</div></div>`;
+  };
+  const agent = (l, opts) => box(l, 'Agent’s '+l, opts);
+
+  /* Only the address slots Ops actually filled appear, and only the first slot
+     (Administrative Area) is a dropdown — the rest are free text, as in the
+     Agent Portal. */
+  const addrRows = ADDR_SLOTS.map((slot,i)=>({label:(state.addr[i]||'').trim(), i}))
+    .filter(a=>a.label!=='')
+    .map(a=>agent(a.label, a.i===0 ? {trail:CHEV} : {})).join('');
+
+  const idRows = state.ids
+    .filter(v=>v.trim()!=='' && v.length<=ID_LIMIT)
+    .map(v=>agent(v)).join('');
+
+  const flagSpan = `<span class="fl">${state.flag}</span>`;
+
+  return `
+    <h2 class="h2">Preview</h2>
+    <p class="sub">Preview of how the onboarding flow appears to agents in the Agent Portal based on your setup.</p>
+    <div class="rule"></div>
+
+    <h3 class="pvh">Personal Info</h3>
+    <div class="pvform">
+      <div class="pvgrid2">
+        ${box('First name','Agent’s first name')}
+        ${box('Last name','Agent’s last name')}
+        ${box('Date of Birth','Agent’s Date of Birth',{lead:CAL})}
+        ${box('Country', state.country, {lead:flagSpan, trail:CHEV, set:true})}
+      </div>
+      <div class="pvgrid2" style="margin-top:12px">
+        ${box('Phone','Agent’s Phone')}
+      </div>
+
+      <div class="pvsub">Address for ${esc(state.country)}</div>
+      <div class="pvstack">${addrRows}</div>
+
+      <div class="pvsub">Identification for ${esc(state.country)}</div>
+      <div class="pvstack">${idRows}</div>
+    </div>
+
+    <div class="rule"></div>
+    <h3 class="pvh">Verification</h3>
+    ${[SAMPLE.govDoc, SAMPLE.police].map(q=>`
+      <div class="pvup">
+        <div class="q">${esc(q)}</div>
+        <div class="n">You may upload front and back separately or combine them into one file.</div>
+        <div class="pvdz">
+          <div class="ic">${UPIC}</div>
+          <div class="t"><b>Click to upload</b> or drag and drop</div>
+          <div class="m">PNG or JPG (max. 3MB)</div>
+        </div>
+      </div>`).join('')}
+
+    <div class="rule"></div>
+    <h3 class="pvh">Consent &amp; Declaration</h3>
+
+    <div class="pvsub" style="margin-top:0">Background Check Consent</div>
+    <div class="pvquote">
+      <p>We perform a comprehensive background check consisting of:</p>
+      <ul>${SAMPLE.checks.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>
+      <p style="margin-top:10px">The check typically covers the last ${SAMPLE.span} years.</p>
+    </div>
+
+    <div class="pvsub">Criminal History Declaration</div>
+    <div class="pvdecl">
+      <div class="intro">${esc(SAMPLE.declIntro)}</div>
+      ${SAMPLE.decl.map(t=>`<div class="r">
+          <span class="s">&bull;&nbsp; ${esc(t)}</span>
+          <span class="yn"><span><i></i>Yes</span><span><i></i>No</span></span>
+        </div>`).join('')}
+    </div>
+  `;
+}
+
 function scenario(key){
   current = key;
   const p = PRESETS[key];
-  state = {addr:[...p.addr], ids:[...p.ids], touched:p.ids.map(()=>false), country:p.country};
+  state = {addr:[...p.addr], ids:[...p.ids], touched:p.ids.map(()=>false),
+           country:p.country, flag:p.flag, step:1};
   document.querySelectorAll('.ctry').forEach(e=>e.textContent=p.country);
   document.getElementById('ctryName').textContent = p.country;
   document.getElementById('ctryFlag').textContent = p.flag;
-  ['today','pt','max'].forEach(k=>
+  ['pt','max'].forEach(k=>
     document.getElementById('s-'+k).classList.toggle('on', k===key));
-  renderAddr(); paint();
+  renderAddr(); paint(); goStep(1);
 }
 
 
 scenario('pt');
+renderStepper();
 </script>
 </body>
 </html>
