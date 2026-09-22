@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Country Onboarding — multiple identification fields</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+/* ---------------------------------------------------------------------------
+   Admin Portal — Add Country wizard, step 1 (Personal Info)
+   Prototype for: "configure more than 1 identification for a country" (Portugal).
+
+   Tokens sampled directly from the Nov 19 Figma PDF export so this sits next to
+   the real screens without looking foreign.
+   --------------------------------------------------------------------------- */
+:root{
+  --bg:#f4f6f8; --panel:#fff; --card:#f8f9fb;
+  --line:#edeef4; --border:#cfd4dc;
+  --ink:#0f1728; --ink2:#344053; --ink3:#667085; --muted:#98a2b3;
+  --step-bg:#ffedcd; --orange:#f78f08; --orange-ink:#b54707;
+  --blue:#444ce6; --blue-d:#3537cc; --blue-s:#edf3ff;
+  --red:#d92d20; --red-s:#fef3f2;
+  --nav-active:#eff9ff; --nav-active-bar:#36bff9;
+  --cyan:#36bff9; --green:#00af80; --amber:#fcb022; --indigo:#3537cc;
+  --sh:0 1px 2px rgba(16,24,40,.05);
+  --font:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#e9ebef;font-family:var(--font);color:var(--ink);padding-bottom:72px;
+  -webkit-font-smoothing:antialiased;font-size:14px;line-height:1.45}
+button{font-family:inherit}
+
+/* ===== Prototype controls: one low pill strip, out of the way ==============
+   Same device as the contract-reacceptance prototypes. Single row, always —
+   wrapping turns the pill into a blob, so it scrolls instead. Not part of the
+   product; it is the control panel for demoing it. */
+.strip{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:500;
+  background:#22303f;color:#fff;border-radius:99px;padding:6px 8px;display:flex;align-items:center;
+  gap:6px;box-shadow:0 12px 32px rgba(16,30,50,.30);font-size:12px;flex-wrap:nowrap;
+  max-width:calc(100vw - 24px);overflow-x:auto;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.scopetag{background:rgba(11,185,138,.18);color:#7ff0cd;font-size:11px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;padding:5px 11px;border-radius:99px;white-space:nowrap}
+.strip .sl{color:#8ba0b5;padding:0 2px 0 7px;white-space:nowrap;font-weight:600;letter-spacing:.02em}
+.segwrap{display:flex;background:rgba(255,255,255,.09);border-radius:99px;padding:2px;gap:1px}
+.sb{border:0;background:transparent;color:#c3d1de;padding:6px 10px;border-radius:99px;font-size:12px;
+  font-weight:600;white-space:nowrap;cursor:pointer}
+.sb:hover{color:#fff}
+.sb.on{background:#0bb98a;color:#fff}
+
+/* ===== App shell ========================================================== */
+.app{display:flex;min-height:760px;max-width:1400px;margin:0 auto;background:var(--panel)}
+
+/* --- Sidebar --- */
+.side{width:256px;flex:0 0 256px;background:#fff;border-right:1px solid var(--line);
+  padding:22px 0 16px;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:9px;padding:0 20px 16px}
+.dots{display:grid;grid-template-columns:repeat(3,4px);gap:2.5px}
+.dots i{width:4px;height:4px;border-radius:50%;background:var(--green);display:block}
+.brand span{font-size:12px;font-weight:700;line-height:1.1;color:var(--ink)}
+.side h2{margin:0;padding:0 20px;font-size:19px;font-weight:700;letter-spacing:-.01em}
+.env{margin:7px 20px 18px;display:inline-block;align-self:flex-start;background:var(--blue-s);
+  color:var(--blue-d);font-size:12px;font-weight:500;padding:3px 9px;border-radius:5px}
+.nav{list-style:none;margin:0;padding:0}
+.nav a{display:flex;align-items:center;gap:12px;padding:9px 20px;color:var(--ink2);
+  text-decoration:none;font-size:14.5px;font-weight:500;position:relative}
+.nav a:hover{background:#fafbfc}
+.nav a.on{background:var(--nav-active);color:var(--ink);font-weight:600}
+.nav a.on::after{content:"";position:absolute;right:0;top:6px;bottom:6px;width:3.5px;
+  border-radius:3px 0 0 3px;background:var(--nav-active-bar)}
+.nav svg{width:19px;height:19px;flex:0 0 19px;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.sep{height:1px;background:var(--line);margin:12px 20px}
+.ver{padding:6px 20px 0;font-size:11px;color:var(--muted)}
+
+/* --- Main --- */
+.main{flex:1;background:var(--bg);padding:24px 40px 56px;min-width:0;position:relative;overflow:hidden}
+.dotfield{position:absolute;top:-30px;right:-40px;width:340px;height:210px;opacity:.55;pointer-events:none}
+.dotfield circle{fill:#e7eaf0}
+.crumb{display:flex;align-items:center;gap:16px;margin:8px 0 22px;position:relative;z-index:1}
+.crumb button{background:none;border:0;color:var(--blue);cursor:pointer;padding:2px;display:flex}
+.crumb svg{width:23px;height:23px;stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.crumb h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.015em}
+
+.panel{background:var(--panel);border-radius:10px;box-shadow:var(--sh);overflow:hidden;position:relative;z-index:1}
+.stepper{background:var(--step-bg);display:flex;align-items:center;justify-content:center;gap:0;padding:14px 20px}
+.stepper .st{display:flex;align-items:center;gap:9px;padding:0 20px;font-size:13.5px;font-weight:600}
+.stepper .st + .st{border-left:1px solid #f0d9ae}
+.stepper .n{width:22px;height:22px;flex:0 0 22px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:12px;font-weight:700;color:#fff;background:var(--orange)}
+.stepper .st.now{color:var(--orange-ink)}
+.stepper .st.todo{color:#c48a45}
+.stepper .st.todo .n{background:#fdc066}
+
+.body{padding:30px 34px 0}
+.h2{margin:0 0 4px;font-size:20px;font-weight:600;letter-spacing:-.01em}
+.sub{margin:0;color:var(--ink2);font-size:14px}
+.rule{height:1px;background:var(--line);margin:26px 0}
+
+/* --- Country select --- */
+.country{max-width:300px;margin-top:12px}
+.selectbox{display:flex;align-items:center;gap:9px;border:1px solid var(--border);border-radius:8px;
+  background:#fff;padding:10px 12px;font-size:14px;cursor:default}
+/* Flags come from the platform's own emoji font rather than hand-drawn SVGs.
+   Windows Chrome has no colour flag glyphs and falls back to the two regional
+   letters (PT, GR) — still legible, just not a flag. */
+.selectbox .flag{flex:none;font-size:18px;line-height:1;
+  font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji','Twemoji Mozilla',sans-serif}
+.selectbox .nm{flex:1}
+.selectbox svg{width:17px;height:17px;stroke:var(--ink3);stroke-width:2;fill:none}
+
+/* --- Field cards --- */
+.grp{margin-top:26px;max-width:660px}
+.grp h3{margin:0 0 3px;font-size:15px;font-weight:700}
+.grp .note{margin:0 0 14px;font-size:13.5px;color:var(--ink2)}
+.fld{background:var(--card);border-radius:8px;padding:15px 16px 11px;margin-bottom:14px}
+.fld .k{font-size:13px;font-weight:700;color:var(--ink);margin-bottom:9px}
+.fld .dl{font-size:13px;color:var(--ink2);margin-bottom:6px}
+.fld input,.fld textarea{width:100%;border:1px solid var(--border);border-radius:8px;background:#fff;
+  padding:10px 13px;font-size:14px;font-family:inherit;color:var(--ink);resize:none;display:block}
+.fld input::placeholder{color:var(--muted)}
+.fld input:focus,.fld textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(68,76,230,.14)}
+.cnt{text-align:right;font-size:11.5px;color:var(--ink3);margin-top:5px;font-variant-numeric:tabular-nums}
+.fld.err input{border-color:var(--red);box-shadow:0 0 0 3px rgba(217,45,32,.12)}
+.fld.err .cnt{color:var(--red)}
+.emsg{display:none;margin-top:6px;font-size:12.5px;color:var(--red)}
+.fld.err .emsg{display:block}
+
+/* Examples callout — moved up to section level, see assumption 4 */
+.eg{border-left:3px solid var(--blue);background:#fff;border-radius:0 6px 6px 0;
+  padding:10px 14px;margin:0 0 16px}
+.eg .t{font-size:13px;color:var(--ink2);margin-bottom:5px}
+.eg ul{margin:0;padding-left:17px}
+.eg li{font-size:13px;color:var(--ink2);margin:2px 0}
+
+/* --- Identification repeater --- */
+.idrow{display:flex;align-items:flex-start;gap:10px}
+.idrow .fld{flex:1;margin-bottom:0}
+.del{flex:0 0 34px;width:34px;height:34px;margin-top:44px;border:0;background:none;cursor:pointer;
+  color:var(--red);border-radius:7px;display:flex;align-items:center;justify-content:center}
+.del:hover{background:var(--red-s)}
+.del svg{width:18px;height:18px;stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.idwrap{margin-bottom:14px}
+.addwrap{position:relative;display:inline-flex;align-items:center;margin:2px 0 4px}
+.add{display:inline-flex;align-items:center;gap:7px;background:none;border:0;color:var(--blue);
+  font-size:14px;font-weight:600;cursor:pointer;padding:7px 8px;border-radius:7px}
+.add:hover:not(:disabled){background:var(--blue-s)}
+.add:disabled{color:var(--muted);cursor:not-allowed}
+.add svg{width:17px;height:17px;stroke-width:2.3;fill:none;stroke-linecap:round}
+.tip{position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
+  background:var(--ink);color:#fff;font-size:12.5px;line-height:1.35;padding:8px 11px;border-radius:7px;
+  width:232px;display:none;z-index:5;box-shadow:0 6px 18px rgba(16,24,40,.18)}
+.tip::before{content:"";position:absolute;right:100%;top:50%;transform:translateY(-50%);
+  border:6px solid transparent;border-right-color:var(--ink)}
+.addwrap:hover .tip.show,.addwrap:focus-within .tip.show{display:block}
+
+/* --- Footer --- */
+.foot{border-top:1px solid var(--line);margin-top:30px;padding:16px 34px 22px;display:flex;
+  align-items:center;justify-content:flex-end}
+.next{background:var(--blue);color:#fff;border:0;border-radius:8px;padding:10px 30px;
+  font-size:14.5px;font-weight:600;cursor:pointer}
+.next:hover:not(:disabled){background:var(--blue-d)}
+.next:disabled{background:#cfd4dc;color:#fff;cursor:not-allowed}
+
+@media (max-width:900px){
+  .side{display:none}
+  .main{padding:20px 18px 48px}
+  .body,.foot{padding-left:18px;padding-right:18px}
+  .stepper{flex-wrap:wrap;gap:6px;justify-content:flex-start}
+  .stepper .st+.st{border-left:0}
+}
+</style>
+</head>
+<body>
+
+<!-- ============================== The app ============================== -->
+<div class="app">
+
+  <!-- Sidebar -->
+  <aside class="side">
+    <div class="brand">
+      <span class="dots"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      <span>Agents<br>Only</span>
+    </div>
+    <h2>Admin Portal</h2>
+    <span class="env">Development</span>
+    <ul class="nav">
+      <li><a href="#" onclick="return false" style="color:var(--ink2)"><svg stroke="var(--green)" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16.5 11.5a3 3 0 1 0-1.8-5.4M17 20a5.6 5.6 0 0 0-2-4"/></svg>Agents</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--cyan)" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg>Projects</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--amber)" viewBox="0 0 24 24"><path d="M12 4 3 8.5 12 13l9-4.5z"/><path d="m3 13 9 4.5L21 13"/></svg>Training</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--green)" viewBox="0 0 24 24"><path d="M3 9.5 12 4l9 5.5M5 10v8M9.6 10v8M14.4 10v8M19 10v8M3 20h18"/></svg>Wallet</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--cyan)" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M12 10v5m0 0-2-2m2 2 2-2"/></svg>Deposits</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--amber)" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M18 7v6M15 10h6"/></svg>Referrals</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--green)" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 15 15 9M9.5 9.5h.01M14.5 14.5h.01"/></svg>Platform Rates</a></li>
+      <li><a href="#" class="on" onclick="return false"><svg stroke="var(--cyan)" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.2"/><path d="M4 12h16M12 4c2.2 2.4 3.2 5.2 3.2 8s-1 5.6-3.2 8c-2.2-2.4-3.2-5.2-3.2-8S9.8 6.4 12 4z"/></svg>Country Admin</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--amber)" viewBox="0 0 24 24"><path d="M2.5 12S6 6 12 6s9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z"/><circle cx="12" cy="12" r="2.6"/></svg>View as User</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--green)" viewBox="0 0 24 24"><path d="m12 4 1.8 4.2L18 10l-4.2 1.8L12 16l-1.8-4.2L6 10l4.2-1.8zM18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z"/></svg>AI Assistants</a></li>
+      <li><a href="#" onclick="return false"><svg stroke="var(--indigo)" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16 14l2 2 4-4"/></svg>Admin Users</a></li>
+    </ul>
+    <div class="sep"></div>
+    <ul class="nav">
+      <li><a href="#" onclick="return false"><svg stroke="var(--indigo)" viewBox="0 0 24 24"><path d="M14 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h7M17 12H10m7 0-3-3m3 3-3 3"/></svg>Logout</a></li>
+    </ul>
+    <div class="ver">ao-admin-portal: v0.0.74</div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <svg class="dotfield" viewBox="0 0 340 210" aria-hidden="true">
+      <g>
+        <circle cx="40" cy="30" r="15"/><circle cx="110" cy="18" r="11"/><circle cx="178" cy="38" r="17"/>
+        <circle cx="250" cy="22" r="13"/><circle cx="312" cy="48" r="16"/><circle cx="70" cy="96" r="12"/>
+        <circle cx="146" cy="104" r="15"/><circle cx="222" cy="92" r="11"/><circle cx="292" cy="116" r="14"/>
+        <circle cx="36" cy="164" r="10"/><circle cx="112" cy="172" r="13"/><circle cx="196" cy="160" r="12"/>
+      </g>
+    </svg>
+
+    <div class="crumb">
+      <button aria-label="Exit"><svg viewBox="0 0 24 24" stroke="currentColor"><path d="M19 12H5m0 0 6-6m-6 6 6 6"/></svg></button>
+      <h1>Exit Add Country</h1>
+    </div>
+
+    <section class="panel">
+      <div class="stepper">
+        <div class="st now"><span class="n">1</span>Personal Info</div>
+        <div class="st todo"><span class="n">2</span>Verification</div>
+        <div class="st todo"><span class="n">3</span>Consent &amp; Declaration</div>
+      </div>
+
+      <div class="body">
+        <h2 class="h2">Select Country</h2>
+        <div class="country">
+          <div class="selectbox">
+            <span class="flag" id="ctryFlag" aria-hidden="true">🇵🇹</span>
+            <span class="nm" id="ctryName">Portugal</span>
+            <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+          </div>
+        </div>
+
+        <div class="rule"></div>
+
+        <h2 class="h2">Personal Info</h2>
+        <p class="sub">Enter the localized field name as it should appear to agents in the onboarding form.</p>
+
+        <!-- Address (unchanged) -->
+        <div class="grp">
+          <h3>Address for <span class="ctry">Portugal</span></h3>
+          <p class="note">Leave an address field blank if you don’t want it to appear to agents.</p>
+          <div id="addr"></div>
+        </div>
+
+        <!-- Identification (the change) -->
+        <div class="grp">
+          <h3>Identification for <span class="ctry">Portugal</span></h3>
+          <p class="note" id="idNote">Add each identification number this country requires. These appear to agents in the onboarding form.</p>
+
+          <div class="eg">
+            <div class="t">Examples:</div>
+            <ul>
+              <li>Mexico → CURP (Clave Única de Registro de Población)</li>
+              <li>Philippines → SSS (Social Security System Number)</li>
+              <li>USA → SSN (Social Security Number) / EIN</li>
+            </ul>
+          </div>
+
+          <div id="ids"></div>
+
+          <div class="addwrap">
+            <button class="add" id="addBtn" onclick="addRow()">
+              <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+              Add identification field
+            </button>
+            <div class="tip" id="addTip"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="foot">
+        <button class="next" id="nextBtn">Next</button>
+      </div>
+    </section>
+  </main>
+</div>
+
+
+<!-- Prototype controls — not part of the product -->
+<div class="strip">
+  <span class="scopetag">Multi-ID</span>
+  <span class="sl">Scenario</span>
+  <span class="segwrap">
+    <button class="sb" id="s-today" onclick="scenario('today')">Today — 1 ID</button>
+    <button class="sb" id="s-pt"    onclick="scenario('pt')">Portugal — 2 IDs</button>
+    <button class="sb" id="s-max"   onclick="scenario('max')">Max (3)</button>
+  </span>
+</div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   State. Address slots are fixed (6, same as today). Identification is now a
+   list — that is the whole change. MAX is a product decision, not a technical
+   limit; 3 keeps the agent-side "pick one" list readable.
+   --------------------------------------------------------------------------- */
+const MAX_IDS = 3, ID_LIMIT = 60, ADDR_LIMIT = 60;
+
+const ADDR_SLOTS = ['Administrative Area','Subadministrative Area','Locality','Sublocality','Street','Postal Code'];
+
+const PRESETS = {
+  today: {
+    addr:['Periféreia (Region)','Regional Unit','Municipality / City','','Street','Taxidromikos Kodikas (TK)'],
+    ids:['Δελτίο Ταυτότητας (ID Card Number)'], country:'Greece', flag:'🇬🇷'
+  },
+  pt: {
+    addr:['Distrito (District)','Concelho (Municipality)','Localidade (City / Town)','Freguesia (Parish)','Rua (Street)','Código Postal'],
+    ids:['Número de Identificação Civil (Citizen Card)','Número de Título de Residência (Residence ID)'],
+    country:'Portugal', flag:'🇵🇹'
+  },
+  max: {
+    addr:['Distrito (District)','Concelho (Municipality)','Localidade (City / Town)','Freguesia (Parish)','Rua (Street)','Código Postal'],
+    ids:['Número de Identificação Civil (Citizen Card)','Número de Título de Residência (Residence ID)','Número de Identificação Fiscal (NIF)'],
+    country:'Portugal', flag:'🇵🇹'
+  }
+};
+
+let state = {addr:[], ids:[], touched:[], country:'Portugal'};
+let current = 'pt';
+
+
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+
+/* --- Render ------------------------------------------------------------- */
+function renderAddr(){
+  document.getElementById('addr').innerHTML = ADDR_SLOTS.map((slot,i)=>{
+    const v = state.addr[i]||'', over = v.length > ADDR_LIMIT;
+    return `<div class="fld ${over?'err':''}">
+      <div class="k">${slot}</div>
+      <div class="dl">Displayed label</div>
+      <input value="${esc(v)}" oninput="setAddr(${i},this.value)" aria-label="${slot} displayed label">
+      <div class="cnt">${v.length}/${ADDR_LIMIT}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderIds(){
+  const n = state.ids.length;
+  document.getElementById('ids').innerHTML = state.ids.map((v,i)=>{
+    const over = v.length > ID_LIMIT, blank = v.trim()==='';
+    /* A field the user has not finished with yet is not a mistake. A newly added
+       row starts clean and only turns destructive once they leave it still empty;
+       until then the disabled Next button carries the message quietly. */
+    const bad = over || (blank && state.touched[i]);
+    return `<div class="idwrap"><div class="idrow">
+      <div class="fld ${bad?'err':''}">
+        <div class="k">Identification ${i+1}</div>
+        <div class="dl">Displayed label</div>
+        <input value="${esc(v)}" placeholder="e.g. Número de Identificação Civil (Citizen Card)"
+               oninput="setId(${i},this.value)" onblur="blurId(${i})"
+               aria-label="Identification ${i+1} displayed label">
+        <div class="cnt">${v.length}/${ID_LIMIT}</div>
+        <div class="emsg">${over ? 'Exceeds 60 character maximum by '+(v.length-ID_LIMIT)+'.' : 'Identification label is a required field'}</div>
+      </div>
+      ${ i>0 ? `<button class="del" onclick="delRow(${i})" aria-label="Remove identification ${i+1}">
+          <svg viewBox="0 0 24 24" stroke="currentColor"><path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg>
+        </button>` : '' }
+    </div></div>`;
+  }).join('');
+
+  /* Add button: blocked while the list has a blank row (matches step 3's rule),
+     and hard-blocked at the cap. Two different tooltips — they are two different
+     problems and a single generic message would not tell Ops what to do. */
+  const btn = document.getElementById('addBtn'), tip = document.getElementById('addTip');
+  const anyBlank = state.ids.some(v=>v.trim()===''), atMax = n >= MAX_IDS;
+  btn.disabled = anyBlank || atMax;
+  tip.classList.toggle('show', btn.disabled);
+  tip.textContent = atMax
+    ? `You can add up to ${MAX_IDS} identification fields.`
+    : 'Fill in all current identification fields before adding new ones.';
+}
+
+
+/* --- Gating -------------------------------------------------------------- */
+function gate(){
+  const addrFilled = state.addr.filter(v=>v.trim()!=='').length;
+  const addrOver   = state.addr.some(v=>v.length>ADDR_LIMIT);
+  const idsFilled  = state.ids.filter(v=>v.trim()!=='').length;
+  const idsOver    = state.ids.some(v=>v.length>ID_LIMIT);
+  const idsBlank   = state.ids.some(v=>v.trim()==='');
+
+  const ok = addrFilled>=2 && idsFilled>=1 && !addrOver && !idsOver && !idsBlank;
+  document.getElementById('nextBtn').disabled = !ok;
+
+}
+
+function paint(){ renderIds(); gate(); }
+
+/* --- Events -------------------------------------------------------------- */
+function setAddr(i,v){ state.addr[i]=v; const el=document.querySelectorAll('#addr .fld')[i];
+  el.classList.toggle('err', v.length>ADDR_LIMIT);
+  el.querySelector('.cnt').textContent = v.length+'/'+ADDR_LIMIT; gate(); }
+
+function setId(i,v){
+  state.ids[i]=v;
+  const wrap=document.querySelectorAll('#ids .fld')[i];
+  const over=v.length>ID_LIMIT, blank=v.trim()==='' && state.touched[i];
+  wrap.classList.toggle('err', over||blank);
+  wrap.querySelector('.cnt').textContent = v.length+'/'+ID_LIMIT;
+  wrap.querySelector('.emsg').textContent = over
+    ? 'Exceeds 60 character maximum by '+(v.length-ID_LIMIT)+'.'
+    : 'Identification label is a required field';
+  /* Re-render only the add button + preview, so typing does not steal focus. */
+  const btn=document.getElementById('addBtn'), tip=document.getElementById('addTip');
+  const anyBlank=state.ids.some(x=>x.trim()===''), atMax=state.ids.length>=MAX_IDS;
+  btn.disabled=anyBlank||atMax; tip.classList.toggle('show', btn.disabled);
+  tip.textContent = atMax ? `You can add up to ${MAX_IDS} identification fields.`
+                          : 'Fill in all current identification fields before adding new ones.';
+  gate();
+}
+
+function addRow(){
+  if(state.ids.length>=MAX_IDS) return;
+  state.ids.push(''); state.touched.push(false); paint();
+  const inputs=document.querySelectorAll('#ids input');
+  inputs[inputs.length-1].focus();
+}
+function delRow(i){ state.ids.splice(i,1); state.touched.splice(i,1); paint(); }
+
+/* Leaving a row empty is the moment it becomes a mistake worth flagging. */
+function blurId(i){
+  if(state.touched[i]) return;
+  state.touched[i] = true;
+  if((state.ids[i]||'').trim()==='') paint();
+}
+
+function scenario(key){
+  current = key;
+  const p = PRESETS[key];
+  state = {addr:[...p.addr], ids:[...p.ids], touched:p.ids.map(()=>false), country:p.country};
+  document.querySelectorAll('.ctry').forEach(e=>e.textContent=p.country);
+  document.getElementById('ctryName').textContent = p.country;
+  document.getElementById('ctryFlag').textContent = p.flag;
+  ['today','pt','max'].forEach(k=>
+    document.getElementById('s-'+k).classList.toggle('on', k===key));
+  renderAddr(); paint();
+}
+
+
+scenario('pt');
+</script>
+</body>
+</html>
