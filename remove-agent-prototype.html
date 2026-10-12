@@ -647,6 +647,25 @@ h1{font-size:32px;font-weight:600;color:var(--title);margin:0 0 36px;letter-spac
   </div>
 </div></div>
 
+<!-- ================= Reject confirmation (option A only: rejection is final) ================= -->
+<div class="ov" id="rjOv" role="dialog" aria-modal="true" aria-labelledby="rjT"><div class="md" style="max-width:520px">
+  <div class="md-h">
+  <button class="mx" data-close="rjOv" aria-label="Close"><svg viewBox="0 0 24 24" class="i"><use href="#i-x"/></svg></button>
+  <h3 id="rjT">Reject Olive John?</h3>
+  <div class="sup">Failed: <span id="rjFails"></span></div>
+  </div>
+  <div class="md-b">
+  <ul class="cl" style="margin-top:0">
+    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>They lose portal access immediately.</span></li>
+    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>They're removed from all their projects, and their wallet balance is paid out.</span></li>
+    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>Their review is marked as completed.</span></li>
+    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>Their data is soft deleted, and permanently deleted when their country's data retention period ends.</span></li>
+  </ul>
+  <p style="margin:14px 0 0;font-size:14px;color:var(--g700)"><b>This can't be undone.</b></p>
+  </div>
+  <div class="md-f"><div class="mact"><button class="btn" id="rjCancel">Cancel</button><button class="btn btn-dg" id="rjGo">Reject agent</button></div></div>
+</div></div>
+
 <!-- ================= Reinstate dialog ================= -->
 <div class="ov" id="riOv" role="dialog" aria-modal="true" aria-labelledby="riT"><div class="md">
   <div class="md-h">
@@ -797,7 +816,7 @@ function renderReview(){
   var names=f.map(function(k){return FAIL_LBL[k]}).join(', ');
   /* One fail banner for every agent, reinstated or not. */
   var lead=names+' failed';
-  var body='Completing the review rejects this agent: they lose portal access, are removed from their projects, and their data is soft deleted until their country\'s retention period ends.';
+  var body='Completing the review rejects this agent: they lose portal access, are removed from their projects, and their data is soft deleted until their country\'s retention period ends.'+(S.opt==='A'?' You\'ll confirm first.':'');
   fb.innerHTML='<div class="alert al-err" style="margin:0">'+ic('i-alertc','width:20px;height:20px;margin-top:0')+'<div class="grow">'+
     '<div class="at">'+lead+'</div><div class="body">'+body+'</div></div></div>';
 }
@@ -845,7 +864,7 @@ function buildStrip(){
     if($('emOv').classList.contains('on'))openEm();
   }});
   /* Switching design option starts the prototype over, so each option is seen from the beginning. */
-  $('optSel').onchange=function(){S.opt=this.value;['rmOv','riOv','emOv'].forEach(closeOv);fresh();render();window.scrollTo({top:0,behavior:'smooth'})};
+  $('optSel').onchange=function(){S.opt=this.value;['rmOv','riOv','emOv','rjOv'].forEach(closeOv);fresh();render();window.scrollTo({top:0,behavior:'smooth'})};
   $('pbDel').onclick=function(){S.status='deleted';render();window.scrollTo({top:0,behavior:'smooth'})};
   $('pbReset').onclick=function(){fresh();render();window.scrollTo({top:0,behavior:'smooth'});toast('Prototype reset')};
 }
@@ -935,14 +954,20 @@ document.querySelectorAll('.acc>.ah').forEach(function(h){h.onclick=function(){h
 document.addEventListener('click',function(e){var h=e.target.closest&&e.target.closest('#tomb .ah');if(h)h.parentNode.classList.toggle('closed')});
 document.querySelectorAll('.rf').forEach(function(x){x.onchange=render});
 /* Passed: approves in one click. Failed: rejects in one click, same in options A and B. */
+/* Option A: rejection is final, so confirm first. Option B: can be reinstated, so one click. */
 $('reviewBtn').onclick=function(){var f=fails();
   if(!f.length){toast('Review completed');return}
+  if(S.opt==='A'){$('rjFails').textContent=f.map(function(k){return FAIL_LBL[k]}).join(', ');var g=$('rjGo');g.disabled=false;g.innerHTML='Reject agent';
+    $('rjOv').classList.add('on');setTimeout(function(){$('rjCancel').focus()},40);return}
   doReject(f)};
+$('rjCancel').onclick=function(){closeOv('rjOv')};
+$('rjGo').onclick=function(){var f=fails(),g=$('rjGo');g.disabled=true;g.innerHTML='<span class="spin"></span>Rejecting…';
+  setTimeout(function(){closeOv('rjOv');doReject(f)},700)};
 function doReject(f){S.rej={fields:f,pay:S.wal==='zero'?'zero':(S.sub==='payfail'?'failed':'pending')};S.wasOn=active();S.status='rejected';S.reinst=null;render();window.scrollTo({top:0,behavior:'smooth'});
   toast(S.rej.pay==='failed'?'Olive John rejected. The payout failed; retry it from the banner.':'Review completed. Olive John is rejected.')}
-['rmOv','riOv','emOv'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===this)closeOv(id)})});
+['rmOv','riOv','emOv','rjOv'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===this)closeOv(id)})});
 document.querySelectorAll('.mx').forEach(function(b){b.onclick=function(){closeOv(b.getAttribute('data-close'))}});
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['rmOv','riOv','emOv'].forEach(closeOv)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')['rmOv','riOv','emOv','rjOv'].forEach(closeOv)});
 
 buildStrip();fresh();render();
 })();
