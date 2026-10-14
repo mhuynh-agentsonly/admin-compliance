@@ -632,7 +632,7 @@ h1{font-size:32px;font-weight:600;color:var(--title);margin:0 0 36px;letter-spac
   </div>
   <div class="md-b" id="rmBody">
   <div class="fld"><label class="lbl" for="rmR">Reason</label>
-    <select class="sel" id="rmR"><option value="">Select a reason</option><option>Fraud</option><option>Cultural fit</option><option>Quality or performance</option><option>Other red flag</option></select>
+    <select class="sel" id="rmR"><option value="">Select a reason</option><option>Fraud</option><option>Failed government ID</option><option>Failed police clearance</option><option>Failed speed test</option><option>Failed PC check</option><option>Cultural fit</option><option>Quality or performance</option><option>Other red flag</option></select>
     <div class="err" id="rmE1">Select a reason.</div></div>
   <div class="fld"><label class="lbl" for="rmN">Internal note</label>
     <textarea id="rmN" placeholder="What happened and what evidence you reviewed"></textarea>
@@ -645,25 +645,6 @@ h1{font-size:32px;font-weight:600;color:var(--title);margin:0 0 36px;letter-spac
   <div class="alert al-err" id="rmErr" style="display:none;margin:0 0 16px"><svg viewBox="0 0 24 24" class="i ai"><use href="#i-alertc"/></svg><div class="grow"><div class="at">Couldn't remove Olive John</div><div class="body">Nothing was changed. Try again, or contact the dev team if it keeps failing.</div></div></div>
   <div class="mact"><button class="btn" id="rmCancel">Cancel</button><button class="btn btn-dg" id="rmGo">Remove from platform</button></div>
   </div>
-</div></div>
-
-<!-- ================= Reject confirmation (option A only: rejection is final) ================= -->
-<div class="ov" id="rjOv" role="dialog" aria-modal="true" aria-labelledby="rjT"><div class="md" style="max-width:520px">
-  <div class="md-h">
-  <button class="mx" data-close="rjOv" aria-label="Close"><svg viewBox="0 0 24 24" class="i"><use href="#i-x"/></svg></button>
-  <h3 id="rjT">Reject Olive John?</h3>
-  <div class="sup">Failed: <span id="rjFails"></span></div>
-  </div>
-  <div class="md-b">
-  <ul class="cl" style="margin-top:0">
-    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>They lose portal access immediately.</span></li>
-    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>They're removed from all their projects, and their wallet balance is paid out.</span></li>
-    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>Their review is marked as completed.</span></li>
-    <li><svg viewBox="0 0 24 24" class="i n"><use href="#i-x"/></svg><span>Their data is soft deleted, and permanently deleted when their country's data retention period ends.</span></li>
-  </ul>
-  <p style="margin:14px 0 0;font-size:14px;color:var(--g700)"><b>This can't be undone.</b></p>
-  </div>
-  <div class="md-f"><div class="mact"><button class="btn" id="rjCancel">Cancel</button><button class="btn btn-dg" id="rjGo">Reject agent</button></div></div>
 </div></div>
 
 <!-- ================= Reinstate dialog ================= -->
@@ -710,7 +691,7 @@ h1{font-size:32px;font-weight:600;color:var(--title);margin:0 0 36px;letter-spac
   <div class="md-f"><div class="mact"><button class="btn" id="emClose">Close</button></div></div>
 </div></div>
 
-<div class="toast" id="toast"><svg viewBox="0 0 24 24" class="i"><use href="#i-checkc"/></svg><span id="toastT"></span></div>
+<div class="toast" id="toast"><svg viewBox="0 0 24 24" class="i" id="toastI"><use href="#i-checkc"/></svg><span id="toastT"></span></div>
 
 <div id="strip"></div>
 
@@ -721,9 +702,9 @@ var ADMIN='Mai Huynh', TODAY='Oct 8, 2026', DEL='Mar 2, 2028';
 var PROJ={Pending:['Fashion Project'],Training:['RV Rental Platform'],Approved:['Large Piza Project','Banking Project','Travel Planning Project']};
 var CLIENT_REMOVED=['Medical Service Project'];
 var FAIL_LBL={gov:'Government ID',police:'Police clearance',speed:'Speed test',pc:'PC check'};
-var FAIL_REASON={gov:'',police:'Failed police clearance',speed:'Failed speed test',pc:'Failed PC check'};
+var FAIL_REASON={gov:'Failed government ID',police:'Failed police clearance',speed:'Failed speed test',pc:'Failed PC check'};
 var ORDER=['police','gov','speed','pc'];
-var S={opt:'B',proj:'some',wal:'bal',sub:'ok'};
+var S={opt:'A',proj:'some',wal:'bal',sub:'ok'};   /* no reinstate in this version (PO, Oct 14) */
 
 function fresh(){S.status='active';S.rm=null;S.rej=null;S.reinst=null;S.wasOn=[];
   document.querySelectorAll('.rf').forEach(function(x){x.value='Passed'});}
@@ -732,7 +713,7 @@ function active(){if(S.proj==='none')return [];var a=[];
 function fails(){return ORDER.filter(function(k){return document.querySelector('.rf[data-k="'+k+'"]').value==='Failed'})}
 function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function ic(id,st){return '<svg viewBox="0 0 24 24" class="i"'+(st?' style="'+st+'"':'')+'><use href="#'+id+'"/></svg>'}
-function toast(m){$('toastT').textContent=m;var t=$('toast');t.style.display='flex';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},Math.max(3200,m.length*55))}
+function toast(m){var bad=/^Failed/.test(m);$('toastI').innerHTML='<use href="#'+(bad?'i-alertc':'i-checkc')+'"/>';$('toastI').style.color=bad?'var(--e600,#d92d20)':'';$('toastT').textContent=m;var t=$('toast');t.style.display='flex';clearTimeout(t._t);t._t=setTimeout(function(){t.style.display='none'},Math.max(3200,m.length*55))}
 function nProj(n){return n+' project'+(n===1?'':'s')}
 /* Jumps to Current Projects (opening the section if it's collapsed) and briefly highlights it. */
 function goProjects(){var b=$('pcols').closest('.blk'),acc=$('pcols').closest('.acc');acc.classList.remove('closed');
@@ -776,12 +757,12 @@ function renderBanner(){
       '<dl class="kv body"><dt>Failed checks</dt><dd>'+j.fields.map(function(k){return FAIL_LBL[k]}).join(', ')+'</dd>'+
       '<dt>Portal access</dt><dd>Revoked</dd><dt>Wallet</dt><dd>'+payDD(j.pay)+'</dd>'+
       '<dt>Data</dt><dd>Soft deleted. Permanently deleted when their country\'s data retention period ends.</dd></dl>'+
-      '<div class="body" style="color:var(--g500)">'+(S.opt==='A'?'Rejection is final. This agent can\'t be reinstated.':'You can reinstate access until the data is permanently deleted. Projects aren\'t restored; invite the agent again from each project.')+'</div>'+
+      '<div class="body" style="color:var(--g500)">'+'Rejection is final. This agent can\'t be reinstated.'+'</div>'+
       ((S.opt==='B'||j.pay==='failed')?'<div class="acts">'+(S.opt==='B'?'<button class="btn btn-sm btn-out" id="riOpen">Reinstate access</button>':'')+
         (j.pay==='failed'?'<button class="btn btn-sm" id="retryPay">'+ic('i-refresh','width:16px;height:16px')+'Retry payout</button>':'')+'</div>':'')+
       '</div></div>';
     if($('riOpen'))$('riOpen').onclick=openRi;
-    if($('retryPay'))$('retryPay').onclick=function(){S.rej.pay='pending';S.sub='ok';render();toast('Payout retried. $184.50 sent for payout.')};
+    if($('retryPay'))$('retryPay').onclick=function(){S.rej.pay='pending';S.sub='ok';render();toast('Successfully sent $184.50 for payout')};
     return}
   if(S.status==='removed'){var r=S.rm,pl=r.projects.length?'<button class="plink" id="goProj">'+nProj(r.projects.length)+'</button>':'No active projects';
     el.innerHTML='<div class="alert al-err">'+ic('i-alertc','width:20px;height:20px;margin-top:0')+'<div class="grow">'+
@@ -789,12 +770,12 @@ function renderBanner(){
       '<dl class="kv body"><dt>Reason</dt><dd>'+esc(r.reason)+'</dd><dt>Internal note</dt><dd>'+esc(r.note)+'</dd>'+
       '<dt>Portal access</dt><dd>Revoked</dd><dt>Wallet</dt><dd>'+payDD()+'</dd>'+
       '<dt>Data</dt><dd>Soft deleted. Permanently deleted when their country\'s data retention period ends.</dd></dl>'+
-      '<div class="body" style="color:var(--g500)">'+(S.opt==='A'?'Removal is final. This agent can\'t be reinstated.':'You can reinstate access until the data is permanently deleted. Projects aren\'t restored; invite the agent again from each project.')+'</div>'+
+      '<div class="body" style="color:var(--g500)">'+'Removal is final. This agent can\'t be reinstated.'+'</div>'+
       '<div class="acts">'+(S.opt==='B'?'<button class="btn btn-sm btn-out" id="riOpen">Reinstate access</button>':'')+
       (r.pay==='failed'?'<button class="btn btn-sm" id="retryPay">'+ic('i-refresh','width:16px;height:16px')+'Retry payout</button>':'')+
       '</div></div></div>';
     if($('riOpen'))$('riOpen').onclick=openRi;
-    if($('retryPay'))$('retryPay').onclick=function(){S.rm.pay='pending';S.sub='ok';render();toast('Payout retried. $184.50 sent for payout.')};
+    if($('retryPay'))$('retryPay').onclick=function(){S.rm.pay='pending';S.sub='ok';render();toast('Successfully sent $184.50 for payout')};
   } else if(S.status==='active'&&S.reinst){var h=S.reinst;
     el.innerHTML='<div class="alert al-gray">'+ic('i-info','width:20px;height:20px;margin-top:0')+'<div class="grow">'+
       '<div class="at">Reinstated on '+TODAY+' by '+ADMIN+'</div>'+
@@ -808,17 +789,15 @@ function renderReview(){
   $('review').classList.toggle('ro-wrap',ro);
   document.querySelectorAll('.rf').forEach(function(x){x.classList.toggle('failed',x.value==='Failed');x.disabled=ro});
   document.querySelectorAll('.upd').forEach(function(x){x.disabled=ro});
-  /* One rule for every agent: a failed check + Review Completed = rejected (PO, 20:02).
-     Rejection revokes access, removes them from projects and starts data deletion. */
   var f=fails(),fb=$('failBanner');
   $('reviewBtn').disabled=ro;
   if(S.status!=='active'||!f.length){fb.innerHTML='';return}
   var names=f.map(function(k){return FAIL_LBL[k]}).join(', ');
   /* One fail banner for every agent, reinstated or not. */
   var lead=names+' failed';
-  var body='Completing the review rejects this agent: they lose portal access, are removed from their projects, and their data is soft deleted until their country\'s retention period ends.'+(S.opt==='A'?' You\'ll confirm first.':'');
   fb.innerHTML='<div class="alert al-err" style="margin:0">'+ic('i-alertc','width:20px;height:20px;margin-top:0')+'<div class="grow">'+
-    '<div class="at">'+lead+'</div><div class="body">'+body+'</div></div></div>';
+    '<div class="at">'+lead+'</div><div class="body">If this agent shouldn\'t continue on the platform, use <button class="plink" id="goRm">Remove from platform</button> at the bottom of the page.</div></div></div>';
+  $('goRm').onclick=goRemove;
 }
 function goRemove(){var d=$('danger');d.scrollIntoView({behavior:'smooth',block:'center'});d.classList.remove('flash');void d.offsetWidth;d.classList.add('flash')}
 
@@ -829,15 +808,9 @@ function renderDanger(){
 
 function renderTomb(){var t=$('tomb');
   if(S.status!=='deleted'){t.innerHTML='';return}
-  var proj=(S.wasOn.map(function(x){return x[0]})).concat(CLIENT_REMOVED);
-  function f(l,v){return '<div class="f"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>'}
+  /* Nothing personal stays visible after deletion (PO, Oct 14). */
   t.innerHTML='<div class="alert al-gray">'+ic('i-info','width:20px;height:20px;margin-top:0')+'<div class="grow"><div class="at">Personal data deleted on '+DEL+'</div>'+
-    '<div>Deleted: date of birth, phone, address, bank details, ID numbers, work experience and preferences, test results, background-check documents and the internal note. This agent can\'t be reinstated.</div></div></div>'+
-    '<section class="acc"><div class="ah">Personal Info'+ic('i-up')+'</div><div class="ab"><div class="blk"><div class="g3">'+
-      f('Agent name','Olive John')+f('Email address','name.surname@email.com')+f('Agent ID','HUu55Noz7tVh3RhAbMYjGm06wwQ2')+
-      f('Country','Canada')+(S.rej?f('Rejected',TODAY+' · failed '+S.rej.fields.map(function(k){return FAIL_LBL[k]}).join(', ').toLowerCase()):f('Removed from platform',TODAY+' · '+esc(S.rm?S.rm.reason:'')))+f('Data deleted',DEL)+
-      '<div class="f"><div class="l">Projects worked on</div><ul>'+proj.map(function(x){return '<li>'+esc(x)+'</li>'}).join('')+'</ul></div>'+
-    '</div></div></div></section>';
+    '<div>All of this agent\'s personal data has been permanently deleted. Records we\'re required by law to keep, like payout records and signed contracts, are stored separately.</div></div></div>';
 }
 
 /* ---------- control strip ---------- */
@@ -845,7 +818,6 @@ function seg(key,opts){return '<span class="grp"><span class="sl">'+opts.label+'
 /* Built once; later renders only update the selected/disabled state, so nothing jumps. */
 function buildStrip(){
   $('strip').innerHTML='<div class="strip"><span class="scopetag">Remove agent</span>'+
-    '<span class="grp"><span class="sl">Design</span><select class="ssel" id="optSel" aria-label="Design option"><option value="A">A · Removal is final</option><option value="B">B · Can reinstate</option></select></span>'+
     seg('proj',{label:'Projects',items:[['some','5 active'],['none','None']]})+
     seg('wal',{label:'Wallet',items:[['bal','$184.50'],['zero','$0']]})+
     seg('sub',{label:'On submit',items:[['ok','Success'],['payfail','Payout fails'],['err','Request fails']]})+
@@ -864,7 +836,6 @@ function buildStrip(){
     if($('emOv').classList.contains('on'))openEm();
   }});
   /* Switching design option starts the prototype over, so each option is seen from the beginning. */
-  $('optSel').onchange=function(){S.opt=this.value;['rmOv','riOv','emOv','rjOv'].forEach(closeOv);fresh();render();window.scrollTo({top:0,behavior:'smooth'})};
   $('pbDel').onclick=function(){S.status='deleted';render();window.scrollTo({top:0,behavior:'smooth'})};
   $('pbReset').onclick=function(){fresh();render();window.scrollTo({top:0,behavior:'smooth'});toast('Prototype reset')};
 }
@@ -874,7 +845,6 @@ function renderStrip(){
     var noPay=(k==='sub'&&v==='payfail'&&S.wal!=='bal'), done=(k==='sub'&&v==='err'&&S.status!=='active');
     b.disabled=noPay||done;
     b.title=noPay?'No payout is made with this wallet setting, so a payout can\'t fail. Pick $184.50.':done?'Only applies when confirming a removal. Press Reset to try it.':''});
-  $('optSel').value=S.opt;
   var canDel=S.status==='removed'||S.status==='rejected';
   $('pbDel').disabled=!canDel;
   $('pbDel').title=canDel?'':'Remove or reject the agent first';
@@ -883,7 +853,7 @@ function renderStrip(){
 /* ---------- remove dialog ---------- */
 function openRm(){
   var f=fails();
-  $('rmR').value='';$('rmN').value='';
+  var ff=fails();$('rmR').value=ff.length?FAIL_REASON[ff[0]]:'';$('rmN').value='';
   ['rmE1','rmE2'].forEach(function(i){$(i).style.display='none'});$('rmErr').style.display='none';
   $('rmR').classList.remove('inv');$('rmN').classList.remove('inv');
   fillRm();
@@ -901,8 +871,8 @@ function fillRm(){
     (S.wal==='zero'?'<div class="mnote">No balance to pay out.</div>':S.wal==='nopm'?'<div class="mnote w">No payout method on file, so the balance can\'t be paid out automatically. It will be held, and Finance will need to contact the agent.</div>':'<div class="mnote">The full balance will be withdrawn automatically so it can be paid out.</div>')+'</div>';
   $('rmData').innerHTML='<div class="mbox"><div class="mh">Access and data</div><div class="mnote">'+
     '<p>Portal access is revoked immediately. If the agent is signed in, they\'re signed out.</p>'+
-    '<p>Their personal data is soft deleted now and permanently deleted when their country\'s data retention period ends. The agent can ask for earlier deletion. We must delete it without undue delay, and no later than one month after we receive the request. Their name, email and the projects they worked on stay visible to admins, along with records we\'re required by law to keep, like payout records and signed contracts.</p>'+
-    (S.opt==='A'?'<p><b>Removal is final.</b> You won\'t be able to reinstate this agent.</p>':'<p>You can reinstate their access until the data is permanently deleted. Projects won\'t be restored.</p>')+
+    '<p>Their personal data is soft deleted now and permanently deleted when their country\'s data retention period ends. The agent can ask for earlier deletion. We must delete it without undue delay, and no later than one month after we receive the request. Records we\'re required by law to keep, like payout records and signed contracts, are kept separately for their own legal period.</p>'+
+    '<p><b>Removal is final.</b> This agent can\'t be reinstated.</p>'+
     '</div></div>';
 }
 function closeOv(id){$(id).classList.remove('on')}
@@ -916,11 +886,11 @@ $('rmGo').onclick=function(){
   $('rmErr').style.display='none';if(!r||!n)return;
   var g=$('rmGo');g.disabled=true;g.innerHTML='<span class="spin"></span>Removing…';
   setTimeout(function(){
-    if(S.sub==='err'){g.disabled=false;g.innerHTML='Remove from platform';$('rmErr').style.display='flex';return}
+    if(S.sub==='err'){g.disabled=false;g.innerHTML='Remove from platform';toast('Failed to remove Olive John from the platform. Please try again.');return}
     var p=active();
     S.rm={reason:r,note:n,projects:p,pay:S.wal==='zero'?'zero':S.wal==='nopm'?'nopm':(S.sub==='payfail'?'failed':'pending')};
     S.wasOn=p;S.status='removed';S.reinst=null;S.rej=null;closeOv('rmOv');render();window.scrollTo({top:0,behavior:'smooth'});
-    toast(S.sub==='payfail'?'Olive John removed. The payout failed; retry it from the banner.':'Olive John removed from the platform');
+    toast(S.sub==='payfail'?'Failed to pay out Olive John\'s wallet. Please retry from the banner.':'Successfully removed Olive John from the platform');
   },1100);
 };
 
@@ -953,21 +923,15 @@ $('emClose').onclick=function(){closeOv('emOv')};
 document.querySelectorAll('.acc>.ah').forEach(function(h){h.onclick=function(){h.parentNode.classList.toggle('closed')}});
 document.addEventListener('click',function(e){var h=e.target.closest&&e.target.closest('#tomb .ah');if(h)h.parentNode.classList.toggle('closed')});
 document.querySelectorAll('.rf').forEach(function(x){x.onchange=render});
-/* Passed: approves in one click. Failed: rejects in one click, same in options A and B. */
-/* Option A: rejection is final, so confirm first. Option B: can be reinstated, so one click. */
-$('reviewBtn').onclick=function(){var f=fails();
-  if(!f.length){toast('Review completed');return}
-  if(S.opt==='A'){$('rjFails').textContent=f.map(function(k){return FAIL_LBL[k]}).join(', ');var g=$('rjGo');g.disabled=false;g.innerHTML='Reject agent';
-    $('rjOv').classList.add('on');setTimeout(function(){$('rjCancel').focus()},40);return}
-  doReject(f)};
-$('rjCancel').onclick=function(){closeOv('rjOv')};
-$('rjGo').onclick=function(){var f=fails(),g=$('rjGo');g.disabled=true;g.innerHTML='<span class="spin"></span>Rejecting…';
-  setTimeout(function(){closeOv('rjOv');doReject(f)},700)};
+/* Review Completed keeps today's behaviour. A failed check never removes anyone automatically
+   (Ops may have picked Failed by mistake, results can be appealed, and Ops make exemptions).
+   Removal always goes through Remove from platform. */
+$('reviewBtn').onclick=function(){toast(S.sub==='err'?'Failed to complete the review. Please try again.':'Successfully completed the review')};
 function doReject(f){S.rej={fields:f,pay:S.wal==='zero'?'zero':(S.sub==='payfail'?'failed':'pending')};S.wasOn=active();S.status='rejected';S.reinst=null;render();window.scrollTo({top:0,behavior:'smooth'});
   toast(S.rej.pay==='failed'?'Olive John rejected. The payout failed; retry it from the banner.':'Review completed. Olive John is rejected.')}
-['rmOv','riOv','emOv','rjOv'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===this)closeOv(id)})});
+['rmOv','riOv','emOv'].forEach(function(id){$(id).addEventListener('click',function(e){if(e.target===this)closeOv(id)})});
 document.querySelectorAll('.mx').forEach(function(b){b.onclick=function(){closeOv(b.getAttribute('data-close'))}});
-document.addEventListener('keydown',function(e){if(e.key==='Escape')['rmOv','riOv','emOv','rjOv'].forEach(closeOv)});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')['rmOv','riOv','emOv'].forEach(closeOv)});
 
 buildStrip();fresh();render();
 })();
