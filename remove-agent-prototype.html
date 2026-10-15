@@ -589,7 +589,7 @@ h1{font-size:32px;font-weight:600;color:var(--title);margin:0 0 36px;letter-spac
           <div class="rvc">
             <div class="lbl">Government ID</div><select class="sel rf" data-k="gov" aria-label="Government ID"><option>Passed</option><option>Failed</option></select>
             <div class="lbl" style="margin-top:44px">Police clearance</div><select class="sel rf" data-k="police" aria-label="Police clearance"><option>Passed</option><option>Failed</option></select>
-            <div style="text-align:right;margin-top:12px"><button class="btn btn-sm" style="font-weight:400"><svg viewBox="0 0 24 24" class="i" style="width:18px;height:18px"><use href="#i-refresh"/></svg>Reset Police Clearance</button></div>
+            <div style="display:none;text-align:right;margin-top:12px"><!-- Reset Police Clearance: not built yet --><button class="btn btn-sm" style="font-weight:400"><svg viewBox="0 0 24 24" class="i" style="width:18px;height:18px"><use href="#i-refresh"/></svg>Reset Police Clearance</button></div>
           </div>
         </div></div>
       <div class="blk"><div class="bt">Speed Test</div>
@@ -632,7 +632,7 @@ h1{font-size:32px;font-weight:600;color:var(--title);margin:0 0 36px;letter-spac
   </div>
   <div class="md-b" id="rmBody">
   <div class="fld"><label class="lbl" for="rmR">Reason</label>
-    <select class="sel" id="rmR"><option value="">Select a reason</option><option>Fraud</option><option>Failed government ID</option><option>Failed police clearance</option><option>Failed speed test</option><option>Failed PC check</option><option>Cultural fit</option><option>Quality or performance</option><option>Other red flag</option></select>
+    <select class="sel" id="rmR"><option value="">Select a reason</option><option>Cultural fit</option><option>Failed government ID</option><option>Failed PC check</option><option>Failed police clearance</option><option>Failed speed test</option><option>Fraud</option><option>Quality or performance</option><option>Other red flag</option></select>
     <div class="err" id="rmE1">Select a reason.</div></div>
   <div class="fld"><label class="lbl" for="rmN">Internal note</label>
     <textarea id="rmN" placeholder="What happened and what evidence you reviewed"></textarea>
@@ -746,7 +746,7 @@ function payDD(p){if(p===undefined)p=S.rm.pay;
   if(p==='zero')return 'No balance to pay out';
   if(p==='nopm')return '<span class="badge" style="background:var(--warn-50);color:var(--warn)">On hold</span>$184.50 · no payout method on file. Finance needs to contact the agent.';
   if(p==='failed')return '<span class="badge" style="background:var(--warn-50);color:var(--warn)">Payout failed</span>$184.50 withdrawn, but the payout didn\'t go through.';
-  return '<span class="badge b-gray">Payout pending</span>$184.50 withdrawn for payout';
+  return '<span class="badge b-gray">Pending</span>$184.50 withdrawn for payout. Track it in the Withdrawals tab.';
 }
 
 function renderBanner(){
@@ -792,7 +792,7 @@ function renderReview(){
   var f=fails(),fb=$('failBanner');
   $('reviewBtn').disabled=ro;
   if(S.status!=='active'||!f.length){fb.innerHTML='';return}
-  var names=f.map(function(k){return FAIL_LBL[k]}).join(', ');
+  var nl=f.map(function(k,i){var s=FAIL_LBL[k];return (i&&/^[A-Z][a-z]/.test(s))?s.charAt(0).toLowerCase()+s.slice(1):s});var names=nl.length>1?nl.slice(0,-1).join(', ')+' and '+nl[nl.length-1]:nl[0];
   /* One fail banner for every agent, reinstated or not. */
   var lead=names+' failed';
   fb.innerHTML='<div class="alert al-err" style="margin:0">'+ic('i-alertc','width:20px;height:20px;margin-top:0')+'<div class="grow">'+
@@ -820,7 +820,7 @@ function buildStrip(){
   $('strip').innerHTML='<div class="strip"><span class="scopetag">Remove agent</span>'+
     seg('proj',{label:'Projects',items:[['some','5 active'],['none','None']]})+
     seg('wal',{label:'Wallet',items:[['bal','$184.50'],['zero','$0']]})+
-    seg('sub',{label:'On submit',items:[['ok','Success'],['payfail','Payout fails'],['err','Request fails']]})+
+    seg('sub',{label:'On submit',items:[['ok','Success'],['err','Request fails']]})+
     '<span class="grp"><button class="pb" id="pbDel">Skip to deletion</button><button class="pb" id="pbReset">Reset</button></span></div>';
   document.querySelectorAll('.sb').forEach(function(b){b.onclick=function(){
     var k=b.getAttribute('data-k');S[k]=b.getAttribute('data-v');
@@ -890,7 +890,7 @@ $('rmGo').onclick=function(){
     var p=active();
     S.rm={reason:r,note:n,projects:p,pay:S.wal==='zero'?'zero':S.wal==='nopm'?'nopm':(S.sub==='payfail'?'failed':'pending')};
     S.wasOn=p;S.status='removed';S.reinst=null;S.rej=null;closeOv('rmOv');render();window.scrollTo({top:0,behavior:'smooth'});
-    toast(S.sub==='payfail'?'Failed to pay out Olive John\'s wallet. Please retry from the banner.':'Successfully removed Olive John from the platform');
+    toast('Successfully removed Olive John from the platform');
   },1100);
 };
 
