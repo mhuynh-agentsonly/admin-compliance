@@ -853,7 +853,7 @@ function renderStrip(){
 /* ---------- remove dialog ---------- */
 function openRm(){
   var f=fails();
-  var ff=fails();$('rmR').value=ff.length?FAIL_REASON[ff[0]]:'';$('rmN').value='';
+  /* The reason always starts empty, even when checks failed (PO, Oct 16): one consistent flow for Ops, fewer QA cases. */$('rmR').value='';$('rmN').value='';
   ['rmE1','rmE2'].forEach(function(i){$(i).style.display='none'});$('rmErr').style.display='none';
   $('rmR').classList.remove('inv');$('rmN').classList.remove('inv');
   fillRm();
